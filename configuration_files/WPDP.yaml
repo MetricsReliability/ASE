@@ -1,0 +1,31 @@
+# 1 explorer
+# 2 experimenter
+experiment_mode: 2
+# 1 for file level
+# 2 for change level
+# 3 for class level
+# 4 for method level
+# 5 for package level
+# 6 for file and change level
+granularity: 1
+# run WPDP only on one dataset for testing the program's features
+single_dataset: "E:\\apply\\york\\project\\dataset\\GitHubBugDataSet-1.1\\database\\antlr4\\antlr4-file_level\\2013.01.21.csv"
+# run WPDP only on one dataset for testing the program's features
+multiple_datasets: "E:\\apply\\york\\project\\dataset\\GitHubBugDataSet-1.1\\database\\antlr4\\antlr4-file_level\\"
+# 1 for kFold cross-validation
+# 2 for holdout validation
+# 3 for leave-one-out cross-validation
+cross_validation_type: 3
+iterations: 100
+dataset_first: True
+evaluation_measures: [Precision, Recall]
+save_predictions: True
+save_confusion_matrix: True
+defect_models: [Mnb,RndFor]
+
+
+
+
+
+
+
