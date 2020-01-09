@@ -16,7 +16,7 @@ multiple_datasets: "E:\\apply\\york\\project\\dataset\\GitHubBugDataSet-1.1\\dat
 # 2 for holdout validation
 # 3 for leave-one-out cross-validation
 cross_validation_type: 3
-iterations: 100
+iterations: 1
 dataset_first: True
 evaluation_measures: [Precision, Recall]
 save_predictions: True
