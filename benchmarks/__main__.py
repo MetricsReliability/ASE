@@ -35,22 +35,27 @@ class PerformanceEvaluation:
                 self.F1 = True
 
     def compute_measures(self, actual, pred):
+        perf_pack = []
         if self.ACC_flag:
             ACC = accuracy_score(actual, pred)
+            perf_pack.append(ACC)
         if self.F1:
             _F1 = f1_score(actual, pred)
+            perf_pack.append(_F1)
         if self.precision_flag:
             Prec = precision_score(actual, pred, labels=None, average='weighted')
+            perf_pack.append(Prec)
         if self.recall_flag:
             Reca = recall_score(actual, pred, labels=None, average='weighted')
+            perf_pack.append(Reca)
         if self.MCC_flag:
             MCC = matthews_corrcoef(actual, pred, sample_weight=None)
+            perf_pack.append(MCC)
 
-        perf_pack = ACC, Prec, Reca, MCC
         return perf_pack
 
     @staticmethod
-    def serializer(self, key_dataset, key_run, key_fold, key_scheme, perf_holder):
+    def serializer(key_dataset, key_run, key_fold, key_scheme, perf_holder):
         data = [key_dataset, key_run, key_fold, key_scheme, perf_holder[0],
                 perf_holder[1], perf_holder[2], perf_holder[3]]
         return data
@@ -92,7 +97,8 @@ class Benchmarks:
                         _dataset = np.delete(_dataset, np.s_[0], axis=0)
 
                         _pred_prob = mnb_obj.fit(_dataset[:, 0:-1], _dataset[:, -1]).predict_proba(test_data)
-
+                        rnd_obj.fit(_dataset[:, 0:-1], _dataset[:, -1])
+                        pred_rnd = rnd_obj.predict(test_data)
                         class_probability_holder = np.concatenate((class_probability_holder, _pred_prob.T), axis=1)
                         _dataset = np.concatenate((_dataset, test_data_reserve.reshape(1, -1)), axis=0)
 
