@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import LeaveOneOut, KFold, StratifiedKFold
 from sklearn.metrics import accuracy_score, precision_score, recall_score, matthews_corrcoef, f1_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier
@@ -11,6 +12,7 @@ import operator
 
 mnb_obj = MultinomialNB()
 rnd_obj = RandomForestClassifier()
+dh_obj = IO()
 
 
 class PerformanceEvaluation:
@@ -40,7 +42,7 @@ class PerformanceEvaluation:
             ACC = accuracy_score(actual, pred)
             perf_pack.append(ACC)
         if self.F1:
-            _F1 = f1_score(actual, pred)
+            _F1 = f1_score(actual, pred, average='weighted')
             perf_pack.append(_F1)
         if self.precision_flag:
             Prec = precision_score(actual, pred, labels=None, average='weighted')
@@ -56,8 +58,7 @@ class PerformanceEvaluation:
 
     @staticmethod
     def serializer(key_dataset, key_run, key_fold, key_scheme, perf_holder):
-        data = [key_dataset, key_run, key_fold, key_scheme, perf_holder[0],
-                perf_holder[1], perf_holder[2], perf_holder[3]]
+        data = [key_dataset, key_run, key_fold, key_scheme, *perf_holder]
         return data
 
 
@@ -67,11 +68,6 @@ class Benchmarks:
         self.config = _configuration
         self.dataset_names = dataset_names
 
-        if self.config['experiment_mode'] == 1 and self.config['iterations'] > 1:
-            raise Exception("The iterations parameter with a value more than zero is for the experimenter mode! ")
-        if self.config['experiment_mode'] == 2 and len(self.config['defect_models']) <= 0:
-            raise Exception("Please specify a defect model for prediction!")
-
         self.model_holder = []
         for item in self.config['defect_models']:
             if item == "Mnb":
@@ -79,39 +75,45 @@ class Benchmarks:
             if item == "RndFor":
                 self.model_holder.append(rnd_obj)
 
-    def leave_one_out(self):
+        if self.config['cross_validation_type'] == 1:
+            self.validator = LeaveOneOut()
+        if self.config['cross_validation_type'] == 2:
+            self.validator = StratifiedKFold()
+        if self.config['cross_validation_type'] == 3:
+            self.validator = KFold(n_splits=self.config['number_of_folds'])
+
+    def base_experimenter(self):
         perf_obj = PerformanceEvaluation(self.config)
+        temp_result = []
         for key_model in range(len(self.model_holder)):
             for key_dataset in range(len(self.dataset)):
                 _dataset = np.array(self.dataset[key_dataset])
                 for key_iter in range(self.config['iterations']):
-                    i = 0
+
                     [m, n] = np.shape(_dataset)
+                    X = _dataset[:, 0:-1]
+                    y = _dataset[:, -1]
+
                     metric_sizes = DataPreprocessing.get_metrics_size(_dataset)
                     class_probability_holder = np.zeros((metric_sizes[-1], 1))
 
-                    predicted = []
-                    while i < m:
-                        test_data = _dataset[i, 0:-1].reshape(1, -1)
-                        test_data_reserve = _dataset[0, :]
-                        _dataset = np.delete(_dataset, np.s_[0], axis=0)
+                    k = 0
+                    for train_idx, test_idx in self.validator.split(X, y):
+                        X_train, X_test = X[train_idx], X[test_idx]
+                        y_train, y_test = y[train_idx], y[test_idx]
 
-                        _pred_prob = mnb_obj.fit(_dataset[:, 0:-1], _dataset[:, -1]).predict_proba(test_data)
-                        rnd_obj.fit(_dataset[:, 0:-1], _dataset[:, -1])
-                        pred_rnd = rnd_obj.predict(test_data)
-                        class_probability_holder = np.concatenate((class_probability_holder, _pred_prob.T), axis=1)
-                        _dataset = np.concatenate((_dataset, test_data_reserve.reshape(1, -1)), axis=0)
+                        predicted = []
 
-                        index, pred = max(enumerate(_pred_prob), key=operator.itemgetter(1))
-                        pred = pred.max()
-                        predicted.append(int(pred))
-                        i = i + 1
-                    class_probability_holder = np.delete(class_probability_holder, 0, 1)
+                        y_pred = mnb_obj.fit(X_train, y_train).predict(X_test)
 
-                    perf_holder = perf_obj.compute_measures(_dataset[:, -1], predicted)
+                        perf_holder = perf_obj.compute_measures(y_test, y_pred)
 
-                    serialized_data = PerformanceEvaluation.serializer(
-                        str(self.dataset_names[key_dataset]), key_iter, i, 'MNB', perf_holder)
+                        serialized_data = PerformanceEvaluation.serializer(
+                            str(self.dataset_names[key_dataset]), key_iter, k, 'MNB', perf_holder)
+                        k = k + 1
+
+                        temp_result.append(serialized_data)
+        dh_obj.write_csv(temp_result, self.config['results_destination'])
 
 
 def main():
@@ -119,11 +121,10 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
 
-    dh_obj = IO()
     dataset, dataset_names = dh_obj.load_datasets(configuration)
 
     bench_obj = Benchmarks(dataset, dataset_names, configuration)
-    bench_obj.leave_one_out()
+    bench_obj.base_experimenter()
 
     # # print("Number of mislabeled points out of a total %d points : %d" %
     # #       (X_test.shape[0], (y_test != y_pred).sum()))

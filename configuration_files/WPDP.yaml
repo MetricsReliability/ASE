@@ -1,6 +1,3 @@
-# 1 explorer
-# 2 experimenter
-experiment_mode: 2
 # 1 for file level
 # 2 for change level
 # 3 for class level
@@ -12,16 +9,19 @@ granularity: 1
 single_dataset: "E:\\apply\\york\\project\\dataset\\GitHubBugDataSet-1.1\\database\\antlr4\\antlr4-file_level\\2013.01.21.csv"
 # run WPDP only on one dataset for testing the program's features
 multiple_datasets: "E:\\apply\\york\\project\\dataset\\GitHubBugDataSet-1.1\\database\\antlr4\\antlr4-file_level\\"
-# 1 for kFold cross-validation
-# 2 for holdout validation
-# 3 for leave-one-out cross-validation
+# 1 for leave-one-out cross-validation
+# 2 for strafied kFold cross-validation
+# 3 for Kfold cross validation
 cross_validation_type: 3
-iterations: 1
+number_of_folds: 10
+iterations: 100
 dataset_first: True
-evaluation_measures: [Precision, Recall]
+# You have following measures: Precision, Recall, ACC, MCC, F1
+evaluation_measures: [Precision, Recall, ACC, MCC, F1]
 save_predictions: True
 save_confusion_matrix: True
-defect_models: [Mnb,RndFor]
+defect_models: [Mnb, RndFor]
+results_destination: "E:\\apply\\york\\project\\source\\outputs\\WPDP\\WPDP.csv"
 
 
 

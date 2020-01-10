@@ -22,18 +22,13 @@ class DataPreprocessing:
 class IO:
     def load_datasets(self, config):
         data = []
-        if config['experiment_mode'] == 1:
-            raw_data = pd.read_csv(config['single_dataset'], index_col=None)
-            raw_data = DataPreprocessing.remove_useless_attr(raw_data)
-            data = raw_data
-        else:
-            os.chdir(config['multiple_datasets'])
-            output_format_extension = 'csv'
-            dataset_list = [i for i in glob.glob('*.{}'.format(output_format_extension))]
-            for i in range(len(dataset_list)):
-                _path_to_data = config['multiple_datasets'] + dataset_list[i]
-                _data_i = pd.read_csv(_path_to_data, index_col=None)
-                data.append(DataPreprocessing.remove_useless_attr(_data_i))
+        os.chdir(config['multiple_datasets'])
+        output_format_extension = 'csv'
+        dataset_list = [i for i in glob.glob('*.{}'.format(output_format_extension))]
+        for i in range(len(dataset_list)):
+            _path_to_data = config['multiple_datasets'] + dataset_list[i]
+            _data_i = pd.read_csv(_path_to_data, index_col=None)
+            data.append(DataPreprocessing.remove_useless_attr(_data_i))
 
         return data, dataset_list
 

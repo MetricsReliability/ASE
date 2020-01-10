@@ -9,10 +9,8 @@ class LoadConfig:
             _path = r'E:\\apply\\york\\project\\source\\configuration_files\\CPDP.yaml'
         with open(_path) as file:
             self.exp_configs = yaml.load(file, Loader=yaml.FullLoader)
-        self._single_dataset = ""
-        self._granularity = ""
         self._multiple_datasets = ""
-        self._experiment_mode = 0
+        self._number_of_folds = 0
         self._cross_validation_type = 0
         self._iterations = 0
         self._dataset_first = True
@@ -20,14 +18,13 @@ class LoadConfig:
         self._save_predictions = True
         self._save_confusion_matrix = True
         self._defect_models = ""
+        self._results_destination = ""
 
         for key in self.exp_configs:
-            if key == "experiment_mode":
-                self.experiment_mode = self.exp_configs[key]
-            if key == "granularity":
-                self.granularity = self.exp_configs[key]
-            if key == "single_file":
-                self.single_dataset = self.exp_configs[key]
+            if key == 'results_destination':
+                self.results_destination = self.exp_configs[key]
+            if key == 'number_of_folds':
+                self.number_of_folds = self.exp_configs[key]
             if key == "multiple_files":
                 self.multiple_datasets = self.exp_configs[key]
             if key == "cross_validation_type":
@@ -45,20 +42,20 @@ class LoadConfig:
 
     # ##################################properties################################
     @property
-    def single_dataset(self):
-        return self._single_dataset
-
-    @property
     def granularity(self):
         return self._granularity
 
     @property
-    def multiple_datasets(self):
-        return self._multiple_datasets
+    def results_destination(self):
+        return self._results_destination
 
     @property
-    def experiment_mode(self):
-        return self._experiment_mode
+    def number_of_folds(self):
+        return self._number_of_folds
+
+    @property
+    def multiple_datasets(self):
+        return self._multiple_datasets
 
     @property
     def cross_validation_type(self):
@@ -89,28 +86,21 @@ class LoadConfig:
         return self._defect_models
 
     # ########################################################setters#############################
-    @experiment_mode.setter
-    def experiment_mode(self, exp_mode):
-        if exp_mode == 1 or exp_mode == 2:
-            self._experiment_mode = exp_mode
-        else:
-            raise ValueError("Please select either explorer or experimenter by entering 1 or 2 respectively!")
-
-    @granularity.setter
-    def granularity(self, grl):
-        grl_range = range(1, 6)
-        if grl in grl_range:
-            self._granularity = grl
-        else:
-            raise ValueError("Please select numbers from 1 to 6!")
-
-    @single_dataset.setter
-    def single_dataset(self, file):
-        self._single_dataset = file
 
     @multiple_datasets.setter
     def multiple_datasets(self, file):
         self._multiple_datasets = file
+
+    @results_destination.setter
+    def results_destination(self, file):
+        self._results_destination = file
+
+    @number_of_folds.setter
+    def number_of_folds(self, k):
+        if k <= 0:
+            raise ValueError('Number of folds must be greater or equal to 0!')
+        else:
+            self._number_of_folds = k
 
     @cross_validation_type.setter
     def cross_validation_type(self, cv):
@@ -159,5 +149,3 @@ class LoadConfig:
             raise ValueError("Please enter names of defect models correctly!")
         else:
             self._defect_models = models
-
-
