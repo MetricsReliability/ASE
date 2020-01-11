@@ -21,12 +21,18 @@ class DataPreprocessing:
 
 class IO:
     def load_datasets(self, config):
+        if config['granularity'] == 1:
+            os.chdir(config['file_level_data_address'])
+            address_flag = config['file_level_data_address']
+        else:
+            os.chdir(config['change_level_data_address'])
+            address_flag = config['change_level_data_address']
+
         data = []
-        os.chdir(config['multiple_datasets'])
         output_format_extension = 'csv'
         dataset_list = [i for i in glob.glob('*.{}'.format(output_format_extension))]
         for i in range(len(dataset_list)):
-            _path_to_data = config['multiple_datasets'] + dataset_list[i]
+            _path_to_data = address_flag + dataset_list[i]
             _data_i = pd.read_csv(_path_to_data, index_col=None)
             data.append(DataPreprocessing.remove_useless_attr(_data_i))
 

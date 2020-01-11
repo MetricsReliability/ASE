@@ -9,30 +9,36 @@ class LoadConfig:
             _path = r'E:\\apply\\york\\project\\source\\configuration_files\\CPDP.yaml'
         with open(_path) as file:
             self.exp_configs = yaml.load(file, Loader=yaml.FullLoader)
-        self._multiple_datasets = ""
+        self._file_level_data_address = ""
+        self._change_level_data_address = ""
         self._number_of_folds = 0
-        self._cross_validation_type = 0
+        self._validation_type = 0
         self._iterations = 0
-        self._dataset_first = True
         self._evaluation_measures = []
         self._save_predictions = True
         self._save_confusion_matrix = True
         self._defect_models = ""
-        self._results_destination = ""
+        self._file_level_WPDP_cross_validation_results_des = ""
+        self._file_level_different_release_results_des = ""
+        self._cross_validation_type = 0
 
         for key in self.exp_configs:
-            if key == 'results_destination':
-                self.results_destination = self.exp_configs[key]
+            if key == 'file_level_WPDP_cross_validation_results_des':
+                self._file_level_WPDP_cross_validation_results_des = self.exp_configs[key]
+            if key == 'file_level_different_release_results_des':
+                self._file_level_different_release_results_des = self.exp_configs[key]
             if key == 'number_of_folds':
                 self.number_of_folds = self.exp_configs[key]
-            if key == "multiple_files":
-                self.multiple_datasets = self.exp_configs[key]
+            if key == "file_level_data_address":
+                self.file_level_data_address = self.exp_configs[key]
+            if key == "change_level_data_address":
+                self.change_level_data_address = self.exp_configs[key]
+            if key == "validation_type":
+                self.validation_type = self.exp_configs[key]
             if key == "cross_validation_type":
-                self.cross_validation_type = self.exp_configs[key]
+                self._cross_validation_type = self.exp_configs[key]
             if key == "iterations":
                 self.iterations = self.exp_configs[key]
-            if key == "dataset_first":
-                self.dataset_first = self.exp_configs[key]
             if key == "evaluation_measures":
                 self.evaluation_measures = self.exp_configs[key]
             if key == "save_predictions":
@@ -46,16 +52,28 @@ class LoadConfig:
         return self._granularity
 
     @property
-    def results_destination(self):
-        return self._results_destination
+    def file_level_WPDP_cross_validation_results_des(self):
+        return self._file_level_WPDP_cross_validation_results_des
+
+    @property
+    def file_level_different_release_results_des(self):
+        return self._file_level_different_release_results_des
 
     @property
     def number_of_folds(self):
         return self._number_of_folds
 
     @property
-    def multiple_datasets(self):
-        return self._multiple_datasets
+    def file_level_data_address(self):
+        return self._file_level_data_address
+
+    @property
+    def change_level_data_address(self):
+        return self._change_level_data_address
+
+    @property
+    def validation_type(self):
+        return self._cross_validation_type
 
     @property
     def cross_validation_type(self):
@@ -64,10 +82,6 @@ class LoadConfig:
     @property
     def iterations(self):
         return self._iterations
-
-    @property
-    def dataset_first(self):
-        return self._dataset_first
 
     @property
     def evaluation_measures(self):
@@ -87,13 +101,21 @@ class LoadConfig:
 
     # ########################################################setters#############################
 
-    @multiple_datasets.setter
-    def multiple_datasets(self, file):
-        self._multiple_datasets = file
+    @file_level_data_address.setter
+    def file_level_data_address(self, file):
+        self._file_level_data_address = file
 
-    @results_destination.setter
-    def results_destination(self, file):
-        self._results_destination = file
+    @change_level_data_address.setter
+    def change_level_data_address(self, file):
+        self._change_level_data_address = file
+
+    @file_level_WPDP_cross_validation_results_des.setter
+    def file_level_WPDP_cross_validation_results_des(self, file):
+        self._file_level_WPDP_cross_validation_results_des = file
+
+    @file_level_different_release_results_des.setter
+    def file_level_different_release_results_des(self, file):
+        self._file_level_different_release_results_des
 
     @number_of_folds.setter
     def number_of_folds(self, k):
@@ -102,12 +124,16 @@ class LoadConfig:
         else:
             self._number_of_folds = k
 
-    @cross_validation_type.setter
-    def cross_validation_type(self, cv):
-        if cv == 1 or cv == 2 or cv == 3:
+    @validation_type.setter
+    def validation_type(self, cv):
+        if cv == 1 or cv == 2 or cv == 3 or cv == 4:
             self._cross_validation_type = cv
         else:
             raise ValueError("Please select 1 or 2 or 3. Check configuration file please!")
+
+    @cross_validation_type.setter
+    def cross_validation_type(self, cross_type):
+        self._cross_validation_type = cross_type
 
     @iterations.setter
     def iterations(self, itr):
@@ -117,13 +143,6 @@ class LoadConfig:
             raise ValueError("Please select an integer number!")
         else:
             self._iterations = itr
-
-    @dataset_first.setter
-    def dataset_first(self, status):
-        if isinstance(status, bool):
-            self._dataset_first = status
-        else:
-            raise ValueError("The status should be True or False!")
 
     @evaluation_measures.setter
     def evaluation_measures(self, list_of_measures):

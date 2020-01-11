@@ -56,11 +56,6 @@ class PerformanceEvaluation:
 
         return perf_pack
 
-    @staticmethod
-    def serializer(key_dataset, key_run, key_fold, key_scheme, perf_holder):
-        data = [key_dataset, key_run, key_fold, key_scheme, *perf_holder]
-        return data
-
 
 class Benchmarks:
     def __init__(self, dataset, dataset_names, _configuration):
@@ -69,19 +64,45 @@ class Benchmarks:
         self.dataset_names = dataset_names
         self.model_holder = self.config['defect_models']
 
-        if self.config['cross_validation_type'] == 1:
+        if self.config['validation_type'] == 1:
             self.validator = LeaveOneOut()
-        if self.config['cross_validation_type'] == 2:
+        if self.config['validation_type'] == 2:
             self.validator = StratifiedKFold()
-        if self.config['cross_validation_type'] == 3:
+        if self.config['validation_type'] == 3:
             self.validator = KFold(n_splits=self.config['number_of_folds'])
 
         self.classifiers = [
             RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
             GaussianNB()]
 
-    def base_experimenter(self):
-        perf_obj = PerformanceEvaluation(self.config)
+        self.perf_obj = PerformanceEvaluation(self.config)
+
+    def different_release(self):
+        temp_result = []
+        for model_name, clf in zip(self.model_holder, self.classifiers):
+            for i in range(0, len(self.dataset)):
+                for j in range(i + 1, len(self.dataset)):
+                    for iterations in range(self.config['iterations']):
+                        tr = np.array(self.dataset[i])
+                        ts = np.array(self.dataset[i])
+                        X_train = tr[:, 0:-1]
+                        y_train = tr[:, -1]
+                        X_test = ts[:, 0:-1]
+                        y_test = ts[:, -1]
+
+                        clf.fit(X_train, y_train)
+                        y_pred = clf.predict(X_test)
+
+                        perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
+
+                        release_pack = [model_name, self.dataset_names[i], self.dataset_names[j], iterations,
+                                        *perf_holder]
+                        temp_result.append(release_pack)
+        dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_des'])
+
+        return perf_holder
+
+    def cross_validation(self):
         temp_result = []
         for model_name, clf in zip(self.model_holder, self.classifiers):
             for key_dataset in range(len(self.dataset)):
@@ -95,8 +116,11 @@ class Benchmarks:
                     class_probability_holder = np.zeros((metric_sizes[-1], 1))
 
                     k = 0
+
                     for train_idx, test_idx in self.validator.split(X, y):
                         X_train, X_test = X[train_idx], X[test_idx]
+                        # y_test = actual class label of test data
+                        # y_train = actual class label of train data
                         y_train, y_test = y[train_idx], y[test_idx]
 
                         predicted = []
@@ -105,14 +129,14 @@ class Benchmarks:
                         score = clf.predict(X_test)
                         prob = clf.predict_proba(X_test)
 
-                        perf_holder = perf_obj.compute_measures(y_test, score)
+                        perf_holder = self.perf_obj.compute_measures(y_test, score)
 
-                        serialized_data = PerformanceEvaluation.serializer(
-                            str(self.dataset_names[key_dataset]), key_iter, k, model_name, perf_holder)
+                        cross_val_pack = [str(self.dataset_names[key_dataset]), key_iter, k, model_name, perf_holder]
+
                         k = k + 1
 
-                        temp_result.append(serialized_data)
-        dh_obj.write_csv(temp_result, self.config['results_destination'])
+                        temp_result.append(cross_val_pack)
+        dh_obj.write_csv(temp_result, self.config['file_level_WPDP_cross_validation_results_des'])
 
 
 def main():
@@ -123,7 +147,14 @@ def main():
     dataset, dataset_names = dh_obj.load_datasets(configuration)
 
     bench_obj = Benchmarks(dataset, dataset_names, configuration)
-    bench_obj.base_experimenter()
+
+    if configuration['validation_type'] == 1:
+        bench_obj.different_release()
+    if configuration['validation_type'] == 2:
+        bench_obj.cross_validation()
+
+    # bench_obj.cross_validation()
+
 
     # # print("Number of mislabeled points out of a total %d points : %d" %
     # #       (X_test.shape[0], (y_test != y_pred).sum()))
