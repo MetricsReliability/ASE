@@ -12,7 +12,8 @@ multiple_datasets: "E:\\apply\\york\\project\\dataset\\GitHubBugDataSet-1.1\\dat
 # 1 for leave-one-out cross-validation
 # 2 for strafied kFold cross-validation
 # 3 for Kfold cross validation
-cross_validation_type: 3
+# 4 for stable defect prediction, use different releases
+cross_validation_type: 4
 number_of_folds: 10
 iterations: 100
 dataset_first: True
@@ -20,7 +21,7 @@ dataset_first: True
 evaluation_measures: [Precision, Recall, ACC, MCC, F1]
 save_predictions: True
 save_confusion_matrix: True
-defect_models: [Mnb, RndFor]
+defect_models: ["Random Forest", "Naive Bayes"]
 results_destination: "E:\\apply\\york\\project\\source\\outputs\\WPDP\\WPDP.csv"
 
 

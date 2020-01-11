@@ -1,16 +1,16 @@
-import pandas as pd
 import numpy as np
-from sklearn.model_selection import LeaveOneOut, KFold, StratifiedKFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import LeaveOneOut, StratifiedKFold
 from sklearn.metrics import accuracy_score, precision_score, recall_score, matthews_corrcoef, f1_score
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.model_selection import KFold
+from sklearn.tree import DecisionTreeClassifier
 from data_collection_manipulation.data_handler import IO
 from configuration_files.setup_config import LoadConfig
 from data_collection_manipulation.data_handler import DataPreprocessing
-import operator
 
-mnb_obj = MultinomialNB()
+gnb_obj = GaussianNB()
 rnd_obj = RandomForestClassifier()
 dh_obj = IO()
 
@@ -67,13 +67,7 @@ class Benchmarks:
         self.dataset = dataset
         self.config = _configuration
         self.dataset_names = dataset_names
-
-        self.model_holder = []
-        for item in self.config['defect_models']:
-            if item == "Mnb":
-                self.model_holder.append(mnb_obj)
-            if item == "RndFor":
-                self.model_holder.append(rnd_obj)
+        self.model_holder = self.config['defect_models']
 
         if self.config['cross_validation_type'] == 1:
             self.validator = LeaveOneOut()
@@ -82,19 +76,22 @@ class Benchmarks:
         if self.config['cross_validation_type'] == 3:
             self.validator = KFold(n_splits=self.config['number_of_folds'])
 
+        self.classifiers = [
+            RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+            GaussianNB()]
+
     def base_experimenter(self):
         perf_obj = PerformanceEvaluation(self.config)
         temp_result = []
-        for key_model in range(len(self.model_holder)):
+        for model_name, clf in zip(self.model_holder, self.classifiers):
             for key_dataset in range(len(self.dataset)):
                 _dataset = np.array(self.dataset[key_dataset])
                 for key_iter in range(self.config['iterations']):
-
-                    [m, n] = np.shape(_dataset)
                     X = _dataset[:, 0:-1]
                     y = _dataset[:, -1]
 
                     metric_sizes = DataPreprocessing.get_metrics_size(_dataset)
+
                     class_probability_holder = np.zeros((metric_sizes[-1], 1))
 
                     k = 0
@@ -104,12 +101,14 @@ class Benchmarks:
 
                         predicted = []
 
-                        y_pred = mnb_obj.fit(X_train, y_train).predict(X_test)
+                        clf.fit(X_train, y_train)
+                        score = clf.predict(X_test)
+                        prob = clf.predict_proba(X_test)
 
-                        perf_holder = perf_obj.compute_measures(y_test, y_pred)
+                        perf_holder = perf_obj.compute_measures(y_test, score)
 
                         serialized_data = PerformanceEvaluation.serializer(
-                            str(self.dataset_names[key_dataset]), key_iter, k, 'MNB', perf_holder)
+                            str(self.dataset_names[key_dataset]), key_iter, k, model_name, perf_holder)
                         k = k + 1
 
                         temp_result.append(serialized_data)
