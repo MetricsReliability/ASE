@@ -100,8 +100,6 @@ class Benchmarks:
                         temp_result.append(release_pack)
         dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_des'])
 
-        return perf_holder
-
     def cross_validation(self):
         temp_result = []
         for model_name, clf in zip(self.model_holder, self.classifiers):
@@ -152,15 +150,6 @@ def main():
         bench_obj.different_release()
     if configuration['validation_type'] == 2:
         bench_obj.cross_validation()
-
-    # bench_obj.cross_validation()
-
-
-    # # print("Number of mislabeled points out of a total %d points : %d" %
-    # #       (X_test.shape[0], (y_test != y_pred).sum()))
-    # # class_prob = mnb_obj.fit(X_train, y_train).predict_proba(X_test)
-    # scores = cross_val_score(mnb_obj, X, y, cv=10, scoring='f1_macro')
-    # print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 
 if __name__ == '__main__':
