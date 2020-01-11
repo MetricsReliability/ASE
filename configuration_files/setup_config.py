@@ -24,9 +24,9 @@ class LoadConfig:
 
         for key in self.exp_configs:
             if key == 'file_level_WPDP_cross_validation_results_des':
-                self._file_level_WPDP_cross_validation_results_des = self.exp_configs[key]
+                self.file_level_WPDP_cross_validation_results_des = self.exp_configs[key]
             if key == 'file_level_different_release_results_des':
-                self._file_level_different_release_results_des = self.exp_configs[key]
+                self.file_level_different_release_results_des = self.exp_configs[key]
             if key == 'number_of_folds':
                 self.number_of_folds = self.exp_configs[key]
             if key == "file_level_data_address":
@@ -36,7 +36,7 @@ class LoadConfig:
             if key == "validation_type":
                 self.validation_type = self.exp_configs[key]
             if key == "cross_validation_type":
-                self._cross_validation_type = self.exp_configs[key]
+                self.cross_validation_type = self.exp_configs[key]
             if key == "iterations":
                 self.iterations = self.exp_configs[key]
             if key == "evaluation_measures":
@@ -73,7 +73,7 @@ class LoadConfig:
 
     @property
     def validation_type(self):
-        return self._cross_validation_type
+        return self._validation_type
 
     @property
     def cross_validation_type(self):
@@ -133,7 +133,10 @@ class LoadConfig:
 
     @cross_validation_type.setter
     def cross_validation_type(self, cross_type):
-        self._cross_validation_type = cross_type
+        if cross_type == 1 or cross_type == 2 or cross_type == 3:
+            self._cross_validation_type = cross_type
+        else:
+            raise ValueError("Please select a valid input! You may choose numbers 1, 2, or 3 for cross_validation_type!")
 
     @iterations.setter
     def iterations(self, itr):

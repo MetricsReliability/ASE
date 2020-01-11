@@ -1,16 +1,17 @@
 # 1 for file level
+# 2 for change level. Please note that this feature is not added yet.
 granularity: 1
 # 1 for stable defect prediction, use different releases
-# 2 for cross validation
-validation_type: 1
+# 2 for cross-validation
+validation_type: 2
 # 1 for KFOLD
 # 2 for leave one out
 # 3 for strafied kfold
-cross_validation_type: 1
+cross_validation_type: 3
 # this parameter is only used when you select cross validation type as KFOLD
 number_of_folds: 10
 iterations: 100
-# You have following measures: Precision, Recall, ACC, MCC, F1
+# You have the following options: Precision, Recall, ACC, MCC, F1
 evaluation_measures: [Precision, Recall, ACC, MCC, F1]
 save_predictions: True
 save_confusion_matrix: True

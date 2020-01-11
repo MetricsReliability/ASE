@@ -64,11 +64,11 @@ class Benchmarks:
         self.dataset_names = dataset_names
         self.model_holder = self.config['defect_models']
 
-        if self.config['validation_type'] == 1:
+        if self.config['cross_validation_type'] == 1:
             self.validator = LeaveOneOut()
-        if self.config['validation_type'] == 2:
+        elif self.config['cross_validation_type'] == 2:
             self.validator = StratifiedKFold()
-        if self.config['validation_type'] == 3:
+        elif self.config['cross_validation_type'] == 3:
             self.validator = KFold(n_splits=self.config['number_of_folds'])
 
         self.classifiers = [
