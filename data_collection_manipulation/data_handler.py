@@ -13,6 +13,7 @@ class DataPreprocessing:
 
     @classmethod
     def get_metrics_size(cls, data):
+        data = np.array(data)
         size_holder = []
         for i in range(np.size(data, 1)):
             size_holder.append(len(np.unique(data[:, i])))

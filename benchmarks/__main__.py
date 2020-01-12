@@ -9,6 +9,7 @@ from sklearn.tree import DecisionTreeClassifier
 from data_collection_manipulation.data_handler import IO
 from configuration_files.setup_config import LoadConfig
 from data_collection_manipulation.data_handler import DataPreprocessing
+from sklearn.metrics import confusion_matrix
 
 gnb_obj = GaussianNB()
 rnd_obj = RandomForestClassifier()
@@ -36,7 +37,7 @@ class PerformanceEvaluation:
             if measure == 'F1':
                 self.F1 = True
 
-    def compute_measures(self, actual, pred):
+    def compute_measures(self, X_train, X_test, actual, pred, s_attrib):
         perf_pack = []
         if self.ACC_flag:
             ACC = accuracy_score(actual, pred)
@@ -54,6 +55,16 @@ class PerformanceEvaluation:
             MCC = matthews_corrcoef(actual, pred, sample_weight=None)
             perf_pack.append(MCC)
 
+        conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
+
+        num_incorrect = ((actual != pred).sum())
+        num_correct = ((actual == pred).sum())
+        num_training_instances = X_train.shape[0]
+        num_test_instances = X_test.shape[0]
+        percent_incorrect = (num_incorrect / num_test_instances)
+
+        # stat = [num_training_instances, num_test_instances, num_correct, num_incorrect, percent_incorrect]
+        # perf_pack.append(stat)
         return perf_pack
 
 
@@ -82,6 +93,7 @@ class Benchmarks:
         for model_name, clf in zip(self.model_holder, self.classifiers):
             for i in range(0, len(self.dataset)):
                 for j in range(i + 1, len(self.dataset)):
+                    self.s_attrib = DataPreprocessing.get_metrics_size(data=self.dataset[i])
                     for iterations in range(self.config['iterations']):
                         tr = np.array(self.dataset[i])
                         ts = np.array(self.dataset[i])
@@ -93,7 +105,7 @@ class Benchmarks:
                         clf.fit(X_train, y_train)
                         y_pred = clf.predict(X_test)
 
-                        perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
+                        perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred, self.s_attrib)
 
                         release_pack = [model_name, self.dataset_names[i], self.dataset_names[j], iterations,
                                         *perf_holder]
