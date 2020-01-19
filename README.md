@@ -5,9 +5,9 @@ In this project, we are going to evaluate the reliability of file-level and chan
 ## Project's structure
 You need the following libraries to run the project:
 
--Sklearn
--Numpy
--Panda
+- Sklearn
+- Numpy
+- Panda
 
 ## Project's structure
 
