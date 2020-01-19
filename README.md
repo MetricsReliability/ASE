@@ -1,6 +1,13 @@
 # Metrics Reliability Project
 
-In this project, we are going to evaluate the reliability of file-level and change-level defect prediction by conducting exploratory analysis.
+In this project, we are going to evaluate the reliability of file-level and change-level defect prediction traditional metrics by conducting exploratory analysis.
+
+## Project's structure
+You need the following libraries to run the project:
+
+-Sklearn
+-Numpy
+-Panda
 
 ## Project's structure
 
