@@ -1,12 +1,12 @@
 # Metrics Reliability Project
 
-In this project, we are going to evaluate reliability of file-level and change-level defect prediction by conducting an exploratory analysis. 
+In this project, we are going to evaluate the reliability of file-level and change-level defect prediction by conducting exploratory analysis.
 
 ## Project's structure
 
 This project contains five packages as follows:
-- benchmarks: for performance evaluationa and validation
-- configuration_files: storing desgined experiment as configuration files 
+- benchmarks: for performance evaluation  and validation
+- configuration_files: storing designed experiment as configuration files 
 - data_collection_manipulation: handling input and output operations on disk
 - datasets: storing datasets for defect prediction
 - output: saving results
@@ -33,7 +33,7 @@ class PerformanceEvaluation:
         self.dataset_names = dataset_names
         self.model_holder = self.config['defect_models']
 ```
-The first class deals with calculating performance of defect prediction models based on evaluation criteria defined in configuration file. The second class handles evaluation types specified by the user in the config file.
+The first class deals with calculating the performance of defect prediction models based on evaluation criteria defined in the configuration file. The second class handles evaluation types specified by the user in the config file.
 
 ### data_collection_manipulation
 This package contains a module namely **data_handler** containing two classess as follows:
@@ -41,9 +41,9 @@ This package contains a module namely **data_handler** containing two classess a
 class DataPreprocessing:
 class IO:
 ```
-The first class performs data preprocessing operations on defect datasets. For example, in the first function of this class, useless attributes are identified and removed. The second function get the size of each metric for further usage. The second class is deal with reading datasets and writing the experiments results in already defined addresses in the config file.
+The first class performs data preprocessing operations on defect datasets. For example, in the first function of this class, useless attributes are identified and removed. The second function gets the size of each metric for further usage. The second class deals with reading datasets and writing the results of the experiments in already defined addresses in the config file.
 
 ### datasets
-This directory contains some sub-directories for datasets categorizes based on level of defect prediction. 
+This directory contains some sub-directories for datasets categorizes based on the level of defect prediction. 
 ### output
-Similar to dataset directory, this one is also contains some sub-directories to store the results based on the type od defect prediction experiment defined in the config file.
+Similar to the dataset directory, this one also contains some sub-directories to store the results based on the type od defect prediction experiment defined in the config file.
