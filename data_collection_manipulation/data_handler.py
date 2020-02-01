@@ -8,6 +8,19 @@ from collections import OrderedDict
 
 ###
 class DataPreprocessing:
+
+    @staticmethod
+    def binerize_class(data):
+        num_records = data.shape[0]
+
+        for r in range(num_records):
+            if data.iloc[r, -1] > 0:
+                data.iloc[r, -1] = 2
+            else:
+                data.iloc[r, -1] = 1
+
+        return data
+
     @classmethod
     def remove_useless_attr(cls, raw_data):
         raw_data = pd.DataFrame(raw_data)
@@ -57,6 +70,7 @@ class IO:
         df_list = OrderedDict()
 
         df_list = {ds_i: [[], []] for ds_i in u_ds_seri}
+        _ds_names_ = {ds_i: [[], []] for ds_i in u_ds_seri}
 
         for ds_i in u_ds_seri:
             i = 0
@@ -64,15 +78,9 @@ class IO:
                 if f.parts[-2] == ds_i:
                     _ds_ = pd.read_csv(filepath_or_buffer=f, index_col=None)
                     _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1], _ds_.columns[2]], axis='columns')
+                    _ds_ = DataPreprocessing.binerize_class(_ds_)
                     df_list[ds_i][i] = _ds_
-                    i += 1
-
-        _ds_names_ = {ds_i: [[], []] for ds_i in u_ds_seri}
-        for ds in _ds_names_.keys():
-            i = 0
-            for f in file_addresses:
-                if ds == f.parts[-2]:
-                    _ds_names_[ds][i] = f.name
+                    _ds_names_[ds_i][i] = f.name
                     i += 1
         return _ds_names_, df_list
 

@@ -11,7 +11,7 @@ cross_validation_type: 3
 # this parameter is only used when you select cross validation type as KFOLD
 number_of_folds: 10
 # the number of iterations
-iterations: 100
+iterations: 10
 # You have the following options: Precision, Recall, ACC, MCC, F1
 evaluation_measures: [Precision, Recall, ACC, MCC, F1]
 # if you want to output predictions for test set, set this field to True

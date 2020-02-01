@@ -109,7 +109,8 @@ class Benchmarks:
                             perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred,
                                                                          self.s_attrib)
 
-                            release_pack = [iterations, model_name, self.dataset_names[ds_cat][i], self.dataset_names[ds_cat][j], iterations,
+                            release_pack = [model_name, ds_cat, self.dataset_names[ds_cat][i],
+                                            self.dataset_names[ds_cat][j], iterations,
                                             *perf_holder]
                             temp_result.append(release_pack)
             dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_des'])
