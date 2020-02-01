@@ -54,14 +54,6 @@ class IO:
         [u_ds_seri.append(v.parts[-2]) for v in file_addresses]
         u_ds_seri = self.preserve_order(u_ds_seri)
 
-        # {f: pd.read_csv(filepath_or_buffer=f, index_col=None) for f in file_addresses}
-
-        # df_list = {
-        #     ds_i: {f.name: pd.read_csv(filepath_or_buffer=f, index_col=None) for f in file_addresses if
-        #            f.parts[-2] == ds_i}
-        #     for ds_i in
-        #     u_ds_seri}
-
         df_list = OrderedDict()
 
         df_list = {ds_i: [[], []] for ds_i in u_ds_seri}
@@ -74,13 +66,6 @@ class IO:
                     _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1], _ds_.columns[2]], axis='columns')
                     df_list[ds_i][i] = _ds_
                     i += 1
-
-        # for key, value in df_list.items():
-        #     for sub_key, sub_val in value.items():
-        #         try:
-        #             df_list[key][sub_key] = DataPreprocessing.remove_useless_attr(sub_val)
-        #         except pd.errors.ParserError as e:
-        #             raise pd.errors.ParserError('Input file does not meet the expected format!')
 
         _ds_names_ = {ds_i: [[], []] for ds_i in u_ds_seri}
         for ds in _ds_names_.keys():
