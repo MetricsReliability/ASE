@@ -84,33 +84,35 @@ class Benchmarks:
 
         self.classifiers = [
             RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
-            GaussianNB()]
+            GaussianNB(), LogisticRegression()]
 
         self.perf_obj = PerformanceEvaluation(self.config)
 
     def different_release(self):
         temp_result = []
         for model_name, clf in zip(self.model_holder, self.classifiers):
-            for i in range(0, len(self.dataset)):
-                for j in range(i + 1, len(self.dataset)):
-                    self.s_attrib = DataPreprocessing.get_metrics_size(data=self.dataset[i])
-                    for iterations in range(self.config['iterations']):
-                        tr = np.array(self.dataset[i])
-                        ts = np.array(self.dataset[i])
-                        X_train = tr[:, 0:-1]
-                        y_train = tr[:, -1]
-                        X_test = ts[:, 0:-1]
-                        y_test = ts[:, -1]
+            for ds_cat, ds_val in self.dataset.items():
+                for i, ds_version in enumerate(ds_val):
+                    for j in range(i + 1, len(ds_val)):
+                        self.s_attrib = DataPreprocessing.get_metrics_size(data=ds_version)
+                        for iterations in range(self.config['iterations']):
+                            tr = np.array(ds_val[i])
+                            ts = np.array(ds_val[j])
+                            X_train = tr[:, 0:-2]
+                            y_train = tr[:, -1]
+                            X_test = ts[:, 0:-2]
+                            y_test = ts[:, -1]
 
-                        clf.fit(X_train, y_train)
-                        y_pred = clf.predict(X_test)
+                            clf.fit(X_train, y_train)
+                            y_pred = clf.predict(X_test)
 
-                        perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred, self.s_attrib)
+                            perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred,
+                                                                         self.s_attrib)
 
-                        release_pack = [model_name, self.dataset_names[i], self.dataset_names[j], iterations,
-                                        *perf_holder]
-                        temp_result.append(release_pack)
-        dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_des'])
+                            release_pack = [iterations, model_name, self.dataset_names[ds_cat][i], self.dataset_names[ds_cat][j], iterations,
+                                            *perf_holder]
+                            temp_result.append(release_pack)
+            dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_des'])
 
     def cross_validation(self):
         temp_result = []
@@ -154,7 +156,7 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
 
-    dataset, dataset_names = dh_obj.load_datasets(configuration)
+    dataset_names, dataset = dh_obj.load_datasets(configuration)
 
     bench_obj = Benchmarks(dataset, dataset_names, configuration)
 
