@@ -1,6 +1,5 @@
 import yaml
 
-
 class LoadConfig:
     def __init__(self, config_indicator):
         if config_indicator == 1:
@@ -19,14 +18,17 @@ class LoadConfig:
         self._save_confusion_matrix = True
         self._defect_models = ""
         self._file_level_WPDP_cross_validation_results_des = ""
-        self._file_level_different_release_results_des = ""
+        self._file_level_different_release_results_whole = ""
+        self._file_level_different_release_list_of_clean_buggy = ""
         self._cross_validation_type = 0
 
         for key in self.exp_configs:
             if key == 'file_level_WPDP_cross_validation_results_des':
                 self.file_level_WPDP_cross_validation_results_des = self.exp_configs[key]
-            if key == 'file_level_different_release_results_des':
+            if key == 'file_level_different_release_results_whole':
                 self.file_level_different_release_results_des = self.exp_configs[key]
+            if key == 'file_level_different_release_list_of_clean_buggy':
+                self.file_level_different_release_list_of_clean_buggy = self.exp_configs[key]
             if key == 'number_of_folds':
                 self.number_of_folds = self.exp_configs[key]
             if key == "file_level_data_address":
@@ -56,8 +58,12 @@ class LoadConfig:
         return self._file_level_WPDP_cross_validation_results_des
 
     @property
-    def file_level_different_release_results_des(self):
-        return self._file_level_different_release_results_des
+    def file_level_different_release_results_whole(self):
+        return self._file_level_different_release_results_whole
+
+    @property
+    def file_level_different_release_list_of_clean_buggy(self):
+        return self._file_level_different_release_list_of_clean_buggy
 
     @property
     def number_of_folds(self):
@@ -113,9 +119,13 @@ class LoadConfig:
     def file_level_WPDP_cross_validation_results_des(self, file):
         self._file_level_WPDP_cross_validation_results_des = file
 
-    @file_level_different_release_results_des.setter
-    def file_level_different_release_results_des(self, file):
-        self._file_level_different_release_results_des
+    @file_level_different_release_results_whole.setter
+    def file_level_different_release_results_whole(self, file):
+        self._file_level_different_release_results_whole = file
+
+    @file_level_different_release_list_of_clean_buggy.setter
+    def file_level_different_release_list_of_clean_buggy(self, file):
+        self.file_level_different_release_list_of_clean_buggy = file
 
     @number_of_folds.setter
     def number_of_folds(self, k):
@@ -136,7 +146,8 @@ class LoadConfig:
         if cross_type == 1 or cross_type == 2 or cross_type == 3:
             self._cross_validation_type = cross_type
         else:
-            raise ValueError("Please select a valid input! You may choose numbers 1, 2, or 3 for cross_validation_type!")
+            raise ValueError(
+                "Please select a valid input! You may choose numbers 1, 2, or 3 for cross_validation_type!")
 
     @iterations.setter
     def iterations(self, itr):

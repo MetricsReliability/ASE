@@ -1,7 +1,10 @@
+import random
+
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold
-from sklearn.metrics import accuracy_score, precision_score, recall_score, matthews_corrcoef, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, matthews_corrcoef, f1_score, \
+    roc_auc_score, classification_report
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
@@ -10,6 +13,7 @@ from data_collection_manipulation.data_handler import IO
 from configuration_files.setup_config import LoadConfig
 from data_collection_manipulation.data_handler import DataPreprocessing
 from sklearn.metrics import confusion_matrix
+import pandas as pd
 
 gnb_obj = GaussianNB()
 rnd_obj = RandomForestClassifier()
@@ -21,39 +25,44 @@ class PerformanceEvaluation:
         self.config = configuration
         self.recall_flag = False
         self.precision_flag = False
-        self.F1 = False
+        self.F1_flag= False
         self.ACC_flag = False
         self.MCC_flag = False
+        self.AUC_flag = False
 
         for measure in self.config['evaluation_measures']:
             if measure == 'Precision':
                 self.precision_flag = True
             if measure == 'Recall':
                 self.recall_flag = True
+            if measure == 'F1':
+                self.F1_flag = True
             if measure == 'ACC':
                 self.ACC_flag = True
             if measure == 'MCC':
                 self.MCC_flag = True
-            if measure == 'F1':
-                self.F1 = True
+            if measure == 'AUC':
+                self.AUC_flag = True
 
     def compute_measures(self, X_train, X_test, actual, pred, s_attrib):
         perf_pack = []
+        a = classification_report(actual, pred, output_dict=True)
+        if self.precision_flag:
+            perf_pack.append(a['2.0']['precision'])
+        if self.recall_flag:
+            perf_pack.append(a['2.0']['recall'])
+        if self.F1_flag:
+            # f1 = 2 * a['2.0']['precision'] * a['2.0']['recall'] / (a['2.0']['precision'] + a['2.0']['recall'])
+            perf_pack.append(a['2.0']['f1-score'])
         if self.ACC_flag:
             ACC = accuracy_score(actual, pred)
             perf_pack.append(ACC)
-        if self.F1:
-            _F1 = f1_score(actual, pred, average='weighted')
-            perf_pack.append(_F1)
-        if self.precision_flag:
-            Prec = precision_score(actual, pred, labels=None, average='weighted')
-            perf_pack.append(Prec)
-        if self.recall_flag:
-            Reca = recall_score(actual, pred, labels=None, average='weighted')
-            perf_pack.append(Reca)
         if self.MCC_flag:
             MCC = matthews_corrcoef(actual, pred, sample_weight=None)
             perf_pack.append(MCC)
+        if self.AUC_flag:
+            _auc = roc_auc_score(actual, pred, average=None)
+            perf_pack.append(roc_auc_score(actual, pred, average=None))
 
         conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
 
@@ -69,10 +78,11 @@ class PerformanceEvaluation:
 
 
 class Benchmarks:
-    def __init__(self, dataset, dataset_names, _configuration):
+    def __init__(self, dataset, dataset_names, file_names, _configuration):
         self.dataset = dataset
         self.config = _configuration
         self.dataset_names = dataset_names
+        self.dataset_file_names = file_names
         self.model_holder = self.config['defect_models']
 
         if self.config['cross_validation_type'] == 1:
@@ -83,19 +93,31 @@ class Benchmarks:
             self.validator = KFold(n_splits=self.config['number_of_folds'])
 
         self.classifiers = [
-            RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+            RandomForestClassifier(n_estimators=1, bootstrap=False, n_jobs=-1, max_depth=3, max_features=None,
+                                   random_state=99),
             GaussianNB(), LogisticRegression()]
+
+        self.header2 = ["Defect models", "projects' category", "Tr version", "Ts version", "Iterations",
+                        "Precision", "Recall", "F1", "ACC", "MCC", "AUC"]
+
+        self.header1 = ["File name", "original status", "predicted status"]
 
         self.perf_obj = PerformanceEvaluation(self.config)
 
+        self.temp_addr = "E:\\apply\\york\\project\\source\\outputs\\file_level" \
+                         "\\different_releases_tr_ts\\ "
+
     def different_release(self):
-        temp_result = []
+        temp_result = [self.header2]
         for model_name, clf in zip(self.model_holder, self.classifiers):
             for ds_cat, ds_val in self.dataset.items():
                 for i, ds_version in enumerate(ds_val):
                     for j in range(i + 1, len(ds_val)):
-                        self.s_attrib = DataPreprocessing.get_metrics_size(data=ds_version)
+                        ## think about attrib size for different releases.
+                        self.s_attrib = DataPreprocessing.get_metrics_size(data=ds_val[j])
                         for iterations in range(self.config['iterations']):
+                            ds_val[i] = DataPreprocessing.binerize_class(ds_val[i])
+                            ds_val[j] = DataPreprocessing.binerize_class(ds_val[j])
                             tr = np.array(ds_val[i])
                             ts = np.array(ds_val[j])
                             X_train = tr[:, 0:-2]
@@ -104,6 +126,7 @@ class Benchmarks:
                             y_test = ts[:, -1]
 
                             clf.fit(X_train, y_train)
+                            random.seed(100)
                             y_pred = clf.predict(X_test)
 
                             perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred,
@@ -112,8 +135,22 @@ class Benchmarks:
                             release_pack = [model_name, ds_cat, self.dataset_names[ds_cat][i],
                                             self.dataset_names[ds_cat][j], iterations,
                                             *perf_holder]
+
+                            a = pd.concat(
+                                [self.dataset_file_names[ds_cat][j], pd.DataFrame(y_test.reshape((-1, 1))).reindex(
+                                    self.dataset_file_names[ds_cat][j].index),
+                                 pd.DataFrame(y_pred.reshape((-1, 1))).reindex(
+                                     self.dataset_file_names[ds_cat][j].index)], axis=1, ignore_index=True)
+
+                            a.columns = self.header1
                             temp_result.append(release_pack)
-            dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_des'])
+
+                            addr = self.temp_addr + model_name + "_" + "Iteration {}".format(
+                                iterations) + "_" + self.dataset_names[ds_cat][j]
+
+                            pd.DataFrame.to_csv(a, path_or_buf=addr, sep=',')
+
+            dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_whole'])
 
     def cross_validation(self):
         temp_result = []
@@ -157,9 +194,9 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
 
-    dataset_names, dataset = dh_obj.load_datasets(configuration)
+    dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration)
 
-    bench_obj = Benchmarks(dataset, dataset_names, configuration)
+    bench_obj = Benchmarks(dataset, dataset_names, datasets_file_names, configuration)
 
     if configuration['validation_type'] == 1:
         bench_obj.different_release()

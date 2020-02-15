@@ -1,0 +1,15 @@
+read the ant project module names
+store the names in a list
+
+list_of_java_files = []
+# remmember to read merely clean files names from the dataset
+
+while not eof list:
+	str x = "org.apache.tools.ant.taskdefs.PathConvert"
+	convert x to y:
+	str y = path\to\project's\source\src\main\org\apache\tools\ant\taskdefs\PathConvert.java
+	list_of_java_files.append(y)
+
+mutation_address = path\to\mutation\library
+for file in y:
+	copy(y,mutation_address)
