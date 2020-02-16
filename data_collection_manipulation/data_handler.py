@@ -46,7 +46,7 @@ class IO:
             list_of_files.append(df_i)
         return list_of_files
 
-    def load_datasets(self, config, misc_address=None):
+    def load_datasets(self, config, misc_address=None, drop_unused_columns=True):
         if config['granularity'] == 1:
             os.chdir(config['file_level_data_address'])
             address_flag = config['file_level_data_address']
@@ -85,16 +85,16 @@ class IO:
                 if f.parts[-2] == ds_i:
                     _ds_ = pd.read_csv(filepath_or_buffer=f, index_col=None)
                     _df_file_names[ds_i][i] = _ds_.iloc[:, 2]
-                    _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1], _ds_.columns[2]], axis='columns')
+                    if drop_unused_columns:
+                        _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1], _ds_.columns[2]], axis='columns')
                     df_datasets_[ds_i][i] = _ds_
                     _df_dataset_names_[ds_i][i] = f.name
                     i += 1
         return _df_dataset_names_, df_datasets_, _df_file_names
 
-
-def write_csv(self, data_obj, filename):
-    with open(filename, 'w', newline='') as csv_file:
-        wr = csv.writer(csv_file)
-        for val in data_obj:
-            wr.writerow(val)
-        csv_file.close()
+    def write_csv(self, data_obj, filename):
+        with open(filename, 'w', newline='') as csv_file:
+            wr = csv.writer(csv_file)
+            for val in data_obj:
+                wr.writerow(val)
+            csv_file.close()
