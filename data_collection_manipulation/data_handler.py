@@ -10,12 +10,15 @@ from collections import OrderedDict
 class DataPreprocessing:
     @staticmethod
     def binerize_class(data):
-        num_records = data.shape[0]
-        for r in range(num_records):
-            if data.iloc[r, -1] > 0:
-                data.iloc[r, -1] = 2
-            else:
-                data.iloc[r, -1] = 1
+        for key, value in data.items():
+            for i, item in enumerate(value):
+                num_records = item.shape[0]
+                for r in range(num_records):
+                    if item.iloc[r, -1] > 0:
+                        item.iloc[r, -1] = 2
+                    else:
+                        item.iloc[r, -1] = 1
+                data[key][i] = item
         return data
 
     @classmethod

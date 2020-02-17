@@ -25,7 +25,7 @@ class PerformanceEvaluation:
         self.config = configuration
         self.recall_flag = False
         self.precision_flag = False
-        self.F1_flag= False
+        self.F1_flag = False
         self.ACC_flag = False
         self.MCC_flag = False
         self.AUC_flag = False
@@ -64,13 +64,13 @@ class PerformanceEvaluation:
             _auc = roc_auc_score(actual, pred, average=None)
             perf_pack.append(roc_auc_score(actual, pred, average=None))
 
-        conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
-
-        num_incorrect = ((actual != pred).sum())
-        num_correct = ((actual == pred).sum())
-        num_training_instances = X_train.shape[0]
-        num_test_instances = X_test.shape[0]
-        percent_incorrect = (num_incorrect / num_test_instances)
+        # conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
+        #
+        # num_incorrect = ((actual != pred).sum())
+        # num_correct = ((actual == pred).sum())
+        # num_training_instances = X_train.shape[0]
+        # num_test_instances = X_test.shape[0]
+        # percent_incorrect = (num_incorrect / num_test_instances)
 
         # stat = [num_training_instances, num_test_instances, num_correct, num_incorrect, percent_incorrect]
         # perf_pack.append(stat)
@@ -108,27 +108,28 @@ class Benchmarks:
                          "\\different_releases_tr_ts\\ "
 
     def different_release(self):
+        self.dataset = DataPreprocessing.binerize_class(self.dataset)
         temp_result = [self.header2]
         for model_name, clf in zip(self.model_holder, self.classifiers):
             for ds_cat, ds_val in self.dataset.items():
                 for i, ds_version in enumerate(ds_val):
                     for j in range(i + 1, len(ds_val)):
                         ## think about attrib size for different releases.
+                        ds_val[i][:] = np.nan_to_num(ds_val[i])
+                        ds_val[j][:] = np.nan_to_num(ds_val[j])
                         self.s_attrib = DataPreprocessing.get_metrics_size(data=ds_val[j])
+                        tr = np.array(ds_val[i])
+                        ts = np.array(ds_val[j])
+                        X_train = tr[:, 0:-2]
+                        y_train = tr[:, -1]
+                        X_test = ts[:, 0:-2]
+                        y_test = ts[:, -1]
                         for iterations in range(self.config['iterations']):
-                            ds_val[i] = DataPreprocessing.binerize_class(ds_val[i])
-                            ds_val[j] = DataPreprocessing.binerize_class(ds_val[j])
-                            tr = np.array(ds_val[i])
-                            ts = np.array(ds_val[j])
-                            X_train = tr[:, 0:-2]
-                            y_train = tr[:, -1]
-                            X_test = ts[:, 0:-2]
-                            y_test = ts[:, -1]
-
                             clf.fit(X_train, y_train)
                             random.seed(100)
                             y_pred = clf.predict(X_test)
 
+                            print(self.dataset_names[ds_cat][i])
                             perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred,
                                                                          self.s_attrib)
 
@@ -148,7 +149,7 @@ class Benchmarks:
                             addr = self.temp_addr + model_name + "_" + "Iteration {}".format(
                                 iterations) + "_" + self.dataset_names[ds_cat][j]
 
-                            pd.DataFrame.to_csv(a, path_or_buf=addr, sep=',')
+                            # pd.DataFrame.to_csv(a, path_or_buf=addr, sep=',')
 
             dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_whole'])
 

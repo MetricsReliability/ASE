@@ -13,9 +13,12 @@ from data_collection_manipulation.data_handler import IO, DataPreprocessing
 io_obj = IO()
 dp_obj = DataPreprocessing()
 
-new_dataset_address = "C:\\mujava\\src\\main"
-old_dataset_address = "E:\\apply\\york\\project\\dataset\\file_level"
-real_files_address = "E:\\apply\\york\\project\\software\\releases\\main source of projects\\jEdit-3.2\\"
+new_dataset_address = "C:\\mujava\\src\\main\\"
+old_dataset_address = "E:\\apply\\york\\project\\dataset\\test\\"
+
+real_files_address = "E:\\apply\\york\\project\\software\\releases\\main source of projects\\xalan-2.4\\src\\"
+dataset_address_for_file_copy = "E:\\apply\\york\\project\\dataset\\file_level\\xalan\\xalan-2.4.csv"
+
 static_target_address = "C:\\mujava\\src\\main\\"
 
 
@@ -37,8 +40,9 @@ def copy_status_to_new_dataset(new_list, old_list):
                         for r2 in range(m2):
                             if temp_new.iloc[r2, 1] == name:
                                 temp_new.iloc[r2, -1] = status
-                                temp_new.iloc[r2, -1] = temp_new.iloc[r2, -1].astype(int)
-                    pd.DataFrame.to_csv(temp_new, path_or_buf=new_dataset_address + new_ds_names[key][i], sep=',')
+                                print(temp_new.iloc[r2, 1])
+                    pd.DataFrame.to_csv(temp_new, path_or_buf=new_dataset_address + new_ds_names[key][i], sep=',',
+                                        index_label=None, index=None)
     return None
 
 
@@ -102,12 +106,17 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
 
-    flag = 1
+    flag = 2
 
     if flag == 1:
-        extension = ".csv"
-        dest_clean_files, base_clean_files = get_list_of_clean_files(clean_file_address)
-        copy_clean_files_for_mutation(dest_clean_files, base_clean_files)
+
+        # please give your target dataset address as input to this function
+        # it returns base_files which are absolute addresses of real files in the project's directory
+        # dest_files are absolute addresses where the files from project's directory are going to be copied for
+        dest_files, base_files = get_list_of_clean_files(dataset_address_for_file_copy)
+        # this function copies files from a specified address to a target address and makes directory if the directory and
+        # files are not exist.
+        copy_clean_files_for_mutation(dest_files, base_files)
     else:
         new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, new_dataset_address,
                                                                 drop_unused_columns=False)
