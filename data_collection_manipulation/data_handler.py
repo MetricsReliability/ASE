@@ -49,7 +49,7 @@ class IO:
             list_of_files.append(df_i)
         return list_of_files
 
-    def load_datasets(self, config, misc_address=None, drop_unused_columns=True):
+    def load_datasets(self, config, misc_address=None, drop_unused_columns=True, flag_delete=False):
         if config['granularity'] == 1:
             os.chdir(config['file_level_data_address'])
             address_flag = config['file_level_data_address']
@@ -73,9 +73,10 @@ class IO:
             else:
                 continue
 
+
         u_ds_seri = []
 
-        [u_ds_seri.append(v.parts[-2]) for v in file_addresses]
+        [u_ds_seri.append(v.parts[-1]) for v in file_addresses]
         u_ds_seri = self.preserve_order(u_ds_seri)
 
         df_datasets_ = {ds_i: [[], []] for ds_i in u_ds_seri}
@@ -85,9 +86,11 @@ class IO:
         for ds_i in u_ds_seri:
             i = 0
             for f in file_addresses:
-                if f.parts[-2] == ds_i:
+                if f.parts[-1] == ds_i:
                     _ds_ = pd.read_csv(filepath_or_buffer=f, index_col=None)
-                    _df_file_names[ds_i][i] = _ds_.iloc[:, 2]
+                    if flag_delete:
+                        _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1]], axis='columns')
+                    _df_file_names[ds_i][i] = _ds_.iloc[:, 0]
                     if drop_unused_columns:
                         _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1], _ds_.columns[2]], axis='columns')
                     df_datasets_[ds_i][i] = _ds_
