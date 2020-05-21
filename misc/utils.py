@@ -15,15 +15,18 @@ from data_collection_manipulation.data_handler import IO, DataPreprocessing
 io_obj = IO()
 dp_obj = DataPreprocessing()
 
-drwang_datasets_equivalent_binary_files = "E:\\apply\\york\\project\\software\\releases\\binary releases\\jakarta-log4j-1.0.4\\org\\"
+drwang_datasets_equivalent_binary_files = "E:\\apply\\york\\project\\software\\releases\\binary releases\\xalan-j_2_4_0\\org\\"
 
 drwang_datasets = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets"
-drwang_datasets_equivalent_source_codes = "E:\\apply\\york\\project\\software\\releases\\main source of projects\\xerces-1.2\\src\\org\\"
+# class file haye mojud dakhele record haye dataset haye dr wang.
+drwang_datasets_equivalent_source_codes = "E:\\apply\\york\\project\\software\\releases\\binary releases\\xalan-j_2_5_0\\org\\"
 
-new_dataset_address = "C:\\Users\\Nima\\Desktop\\understand\\labaled"
-static_target_address = "C:\\mujava\\src\\main\\"
+new_dataset_address = "C:\\Users\\Nima\\Desktop\\ckjm"
 
-final_label_save_address = "C:\\Users\\Nima\\Desktop\\aaa\\"
+# jayi ke class file hay miran baraye metric extraction.
+static_target_address = "E:\\apply\\york\\project\software\\metric extraction frameworks\\ckjm-1.9\\org\\"
+
+final_label_save_address = "C:\\Users\\Nima\\Desktop\\aaaa\\"
 
 
 def merg():
@@ -38,42 +41,63 @@ def merg():
     _ds_.to_csv(out_addr, sep=',', index=None, header=True)
 
 
-def copy_status_to_new_dataset(new_list, old_list):
+def rm_understand_misc_rows(new_list):
     new_ds = new_list[0]
     new_ds_names = new_list[1]
     for key, value in new_ds.items():
-        ds = value[0]
-        [m, n] = ds.shape
-        i = 0
-        ds.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
-        # while(i <= m):
-        #     if pd.isna(ds.iloc[i, -1]):
-        #         ds.drop(ds.index[[i]], inplace=True)
-        #         i = i - 1
-        #     i = i + 1
-        pd.DataFrame.to_csv(ds, path_or_buf=final_label_save_address + new_ds_names[key][0], sep=',',
-                            index_label=None, index=None)
+        for i in range(len(value)):
+            ds = value[i]
+            [m, N] = ds.shape
+            ds.apply(pd.to_numeric, errors='corece')
+            ds = ds.dropna()
+            pd.DataFrame.to_csv(ds, path_or_buf=final_label_save_address + new_ds_names[key][i], sep=',',
+                                index_label=None, index=None)
+            # for j in range(N):
+            #     if ds.iloc[i, 0] != "Class" or ds.iloc[i, 0] != "Public Class" or ds.iloc[i, 0] == "Anonymous Class" or
+            #             ds.iloc[i, 0] == "Private Class" or ds.iloc[i, 0] == "Public Abstract Class" or ds.iloc[
+            #         i, 0] == "Public Interface" or ds.iloc[i, 0] == "Interface":
+            #
 
-    #
-    # for i, item in enumerate(old_list):
-    #     old_ds = old_list[0]
-    #     for key, value in old_ds.items():
-    #         if key in new_ds:
-    #             temp_old = value[0]
-    #             temp_new = new_ds[key][0]
-    #             [m, n] = temp_old.shape
-    #             [m2, n2] = temp_new.shape
-    #             for r in range(m):
-    #                 status = temp_old.iloc[r, -1]
-    #                 name = temp_old.iloc[r, 0]
-    #                 parts_1 = name.split(".")
-    #                 for r2 in range(m2):
-    #                     parts_2 = temp_new.iloc[r2, 0].split(".")
-    #                     if parts_2[-1] == parts_1[-1]:
-    #                         temp_new.iloc[r2, -1] = status
-    #                         print(temp_new.iloc[r2, 0])
-    #             pd.DataFrame.to_csv(temp_new, path_or_buf=final_label_save_address + new_ds_names[key][0], sep=',',
-    #                                 index_label=None, index=None)
+
+def rm_empty_row(new_list):
+    new_ds = new_list[0]
+    new_ds_names = new_list[1]
+    for key, value in new_ds.items():
+        for i in range(len(value)):
+            ds = value[i]
+            [m, n] = ds.shape
+            ds.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
+            # while (i <= m):
+            #     if pd.isna(ds.iloc[i, -1]):
+            #         ds.drop(ds.index[[i]], inplace=True)
+            #         i = i - 1
+            #     i = i + 1
+            pd.DataFrame.to_csv(ds, path_or_buf=final_label_save_address + new_ds_names[key][i], sep=',',
+                                index_label=None, index=None)
+
+
+def copy_status_to_new_dataset(new_list, old_list):
+    new_ds = new_list[0]
+    new_ds_names = new_list[1]
+    for i, item in enumerate(old_list):
+        old_ds = old_list[0]
+        for key, value in old_ds.items():
+            if key in new_ds:
+                temp_old = value[i]
+                temp_new = new_ds[key][i]
+                [m, n] = temp_old.shape
+                [m2, n2] = temp_new.shape
+                for r in range(m):
+                    status = temp_old.iloc[r, -1]
+                    name = temp_old.iloc[r, 0]
+                    parts_1 = name.split(".")
+                    for r2 in range(m2):
+                        parts_2 = temp_new.iloc[r2, 0].split(".")
+                        if parts_2[-1] == parts_1[-1]:
+                            temp_new.iloc[r2, -1] = status
+                            print(temp_new.iloc[r2, 0])
+                pd.DataFrame.to_csv(temp_new, path_or_buf=final_label_save_address + new_ds_names[key][i], sep=',',
+                                    index_label=None, index=None)
     return None
 
 
@@ -104,8 +128,8 @@ def get_list_of_clean_files(f):
     for i, _file in enumerate(dest):
         _file = _file.replace(".", "\\")
         _file2 = _file.replace(".", "\\")
-        _file = static_target_address + _file + ".java"
-        _file2 = drwang_datasets_equivalent_source_codes + _file2 + ".java"
+        _file = static_target_address + _file + ".class"
+        _file2 = drwang_datasets_equivalent_source_codes + _file2 + ".class"
         dest[i] = _file
         source[i] = _file2
 
@@ -151,9 +175,11 @@ def main():
         copy_clean_files_for_mutation(dest_files, base_files)
     elif flag == 3:
         new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, new_dataset_address,
-                                                                drop_unused_columns=False, flag_delete=False)
+                                                                drop_unused_columns='new')
+
+        # rm_understand_misc_rows([new_ds_seri, new_ds_seri_name])
         old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, drwang_datasets,
-                                                                drop_unused_columns=False, flag_delete=True)
+                                                                drop_unused_columns='old')
         copy_status_to_new_dataset([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
     else:
         merg()

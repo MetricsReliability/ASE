@@ -1,12 +1,18 @@
+from collections import OrderedDict
 import pandas as pd
 import numpy as np
 import csv
 import os, glob
 from pathlib import Path
-from collections import OrderedDict
 
 
-###
+def rearrange(pivot, ds):
+    l2 = OrderedDict()
+    for i, v in enumerate(pivot):
+        l2[v] = ds[pivot[i]]
+    return l2
+
+
 class DataPreprocessing:
     @staticmethod
     def binerize_class(data):
@@ -49,7 +55,7 @@ class IO:
             list_of_files.append(df_i)
         return list_of_files
 
-    def load_datasets(self, config, misc_address=None, drop_unused_columns=True, flag_delete=False):
+    def load_datasets(self, config, misc_address=None, drop_unused_columns=True, drop_unused_selection=3):
         if config['granularity'] == 1:
             os.chdir(config['file_level_data_address'])
             address_flag = config['file_level_data_address']
@@ -73,10 +79,11 @@ class IO:
             else:
                 continue
 
-
         u_ds_seri = []
 
-        [u_ds_seri.append(v.parts[-1]) for v in file_addresses]
+        # parts[-2] extracts dataset category e.g camel or ant
+        # parts[-1] extracts dataset name itself e.g camel-1.0 or ant-1.4
+        [u_ds_seri.append(v.parts[-2]) for v in file_addresses]
         u_ds_seri = self.preserve_order(u_ds_seri)
 
         df_datasets_ = {ds_i: [[], []] for ds_i in u_ds_seri}
@@ -86,16 +93,17 @@ class IO:
         for ds_i in u_ds_seri:
             i = 0
             for f in file_addresses:
-                if f.parts[-1] == ds_i:
+                if f.parts[-2] == ds_i:
                     _ds_ = pd.read_csv(filepath_or_buffer=f, index_col=None)
-                    if flag_delete:
-                        _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1]], axis='columns')
                     _df_file_names[ds_i][i] = _ds_.iloc[:, 0]
-                    if drop_unused_columns:
-                        _ds_ = _ds_.drop([_ds_.columns[0], _ds_.columns[1], _ds_.columns[2]], axis='columns')
+
+                    if drop_unused_columns == 'old':
+                        _ds_ = _ds_.drop(
+                            [_ds_.columns[0], _ds_.columns[1]], axis='columns')
                     df_datasets_[ds_i][i] = _ds_
                     _df_dataset_names_[ds_i][i] = f.name
                     i += 1
+        df_datasets_ = rearrange(u_ds_seri, df_datasets_)
         return _df_dataset_names_, df_datasets_, _df_file_names
 
     def write_csv(self, data_obj, filename):

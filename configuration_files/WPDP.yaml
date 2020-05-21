@@ -12,7 +12,7 @@ cross_validation_type: 3
 # this parameter is only used when you select cross validation type as KFOLD
 number_of_folds: 10
 # the number of iterations
-iterations: 3
+iterations: 1
 # You have the following options: Precision, Recall, ACC, MCC, F1
 evaluation_measures: [Precision, Recall, F1, ACC, MCC, AUC]
 # if you want to output predictions for test set, set this field to True
@@ -26,9 +26,9 @@ defect_models: ["Random Forest" ,"Naive Bayes" ,"Logistic Regression"]
 ######################IO ADDRESSES###############
 #################################################
 file_level_WPDP_cross_validation_results_des: "E:\\apply\\york\\project\\source\\outputs\\file_level\\WPDP_cross_validation\\WPDP_cross_validation.csv"
-file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\diff_release_whole.csv"
+file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\diff_orig.csv"
 file_level_different_release_results_list_of_clean_buggy: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\"
-file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets\\"
+file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\file_level\\CKJM_datasets\\labeled"
 change_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\change_level"
 
 

@@ -3,16 +3,14 @@ import random
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold
-from sklearn.metrics import accuracy_score, precision_score, recall_score, matthews_corrcoef, f1_score, \
+from sklearn.metrics import accuracy_score, matthews_corrcoef, \
     roc_auc_score, classification_report
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
-from sklearn.tree import DecisionTreeClassifier
 from data_collection_manipulation.data_handler import IO
 from configuration_files.setup_config import LoadConfig
 from data_collection_manipulation.data_handler import DataPreprocessing
-from sklearn.metrics import confusion_matrix
 import pandas as pd
 
 gnb_obj = GaussianNB()
@@ -48,21 +46,21 @@ class PerformanceEvaluation:
         perf_pack = []
         a = classification_report(actual, pred, output_dict=True)
         if self.precision_flag:
-            perf_pack.append(a['2.0']['precision'])
+            perf_pack.append(round(a['2.0']['precision'], 2))
         if self.recall_flag:
-            perf_pack.append(a['2.0']['recall'])
+            perf_pack.append(round(a['2.0']['recall'], 2))
         if self.F1_flag:
             # f1 = 2 * a['2.0']['precision'] * a['2.0']['recall'] / (a['2.0']['precision'] + a['2.0']['recall'])
-            perf_pack.append(a['2.0']['f1-score'])
+            perf_pack.append(round(a['2.0']['f1-score'], 2))
         if self.ACC_flag:
             ACC = accuracy_score(actual, pred)
-            perf_pack.append(ACC)
+            perf_pack.append(round(ACC, 2))
         if self.MCC_flag:
             MCC = matthews_corrcoef(actual, pred, sample_weight=None)
-            perf_pack.append(MCC)
+            perf_pack.append(round(MCC, 2))
         if self.AUC_flag:
             _auc = roc_auc_score(actual, pred, average=None)
-            perf_pack.append(roc_auc_score(actual, pred, average=None))
+            perf_pack.append(round(roc_auc_score(actual, pred, average=None), 2))
 
         # conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
         #
@@ -105,7 +103,7 @@ class Benchmarks:
         self.perf_obj = PerformanceEvaluation(self.config)
 
         self.temp_addr = "E:\\apply\\york\\project\\source\\outputs\\file_level" \
-                         "\\different_releases_tr_ts\\ "
+                         "\\different_releases_tr_ts\\res_jmt.csv"
 
     def different_release(self):
         self.dataset = DataPreprocessing.binerize_class(self.dataset)
@@ -195,7 +193,8 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
 
-    dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration)
+    dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration, drop_unused_columns=True,
+                                                                       drop_unused_selection=2)
 
     bench_obj = Benchmarks(dataset, dataset_names, datasets_file_names, configuration)
 
