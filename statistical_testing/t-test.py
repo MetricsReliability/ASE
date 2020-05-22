@@ -1,14 +1,19 @@
 ## Import the packages
 import numpy as np
 from scipy import stats
+import pandas as pd
+
+ds_addr = "E:\\apply\\york\\project\\software\\statistical testing framework\\ESEM2020\\reca.csv"
+
+_ds_ = pd.read_csv(filepath_or_buffer=ds_addr, index_col=None)
 
 ## Define 2 random distributions
 # Sample Size
-N = 10
+[m, N] = _ds_.shape
 # Gaussian distributed data with mean = 2 and var = 1
-a = []
+a = _ds_.iloc[:, 2]
 # Gaussian distributed data with with mean = 0 and var = 1
-b = np.random.randn(N)
+b = _ds_.iloc[:, 3]
 
 ## Calculate the Standard Deviation
 # Calculate the variance to get the standard deviation
@@ -19,14 +24,13 @@ var_b = b.var(ddof=1)
 
 # std deviation
 s = np.sqrt((var_a + var_b) / 2)
-s
 
 ## Calculate the t-statistics
-t = (a.mean() - b.mean()) / (s * np.sqrt(2 / N))
+t = (a.mean() - b.mean()) / (s * np.sqrt(2 / m))
 
 ## Compare with the critical t-value
 # Degrees of freedom
-df = 2 * N - 2
+df = 2 * m - 2
 
 # p-value after comparison with the t
 p = 1 - stats.t.cdf(t, df=df)

@@ -52,11 +52,6 @@ def rm_understand_misc_rows(new_list):
             ds = ds.dropna()
             pd.DataFrame.to_csv(ds, path_or_buf=final_label_save_address + new_ds_names[key][i], sep=',',
                                 index_label=None, index=None)
-            # for j in range(N):
-            #     if ds.iloc[i, 0] != "Class" or ds.iloc[i, 0] != "Public Class" or ds.iloc[i, 0] == "Anonymous Class" or
-            #             ds.iloc[i, 0] == "Private Class" or ds.iloc[i, 0] == "Public Abstract Class" or ds.iloc[
-            #         i, 0] == "Public Interface" or ds.iloc[i, 0] == "Interface":
-            #
 
 
 def rm_empty_row(new_list):
@@ -117,14 +112,6 @@ def get_list_of_clean_files(f):
         dest.append(name)
         source.append(name)
 
-    # for i, _file in enumerate(clean_files1):
-    #     _file = _file.replace('.', "\\")
-    #     _file2 = _file.replace('.', "\\")
-    #     _file = static_target_address + _file + ".java"
-    #     _file2 = real_files_address + _file2 + ".java"
-    #     clean_files1[i] = _file
-    #     clean_files2[i] = _file2
-
     for i, _file in enumerate(dest):
         _file = _file.replace(".", "\\")
         _file2 = _file.replace(".", "\\")
@@ -158,6 +145,32 @@ def copy_clean_files_for_mutation(dest_clean_files, base_clean_files):
     return None
 
 
+def find_nonoverlapping(s1, s2):
+    addr_ckjm = "C:\\Users\\Nima\\Desktop\\addr_ckjm\\"
+    addr_jmt = "C:\\Users\\Nima\\Desktop\\addr_jmt\\"
+    addr_understand = "C:\\Users\\Nima\\Desktop\\addr_understand\\"
+
+    s1_ds = s1[0]
+    s1_names = s1[1]
+    s2_names = s2[1]
+    s2_ds = s2[0]
+    for key, value in s1_ds.items():
+        to_compare = s2_ds[key]
+        for i in range(len(value)):
+            sub_ds1 = value[i]
+            sub_ds2 = to_compare[i]
+            diff1to2 = set(sub_ds1.iloc[:, 0]).difference(sub_ds2.iloc[:, 0])
+            diff2to1 = set(sub_ds2.iloc[:, 0]).difference(sub_ds1.iloc[:, 0])
+
+            for item in diff1to2:
+                for index, row in sub_ds1.iterrows():
+                    if item == row[0]:
+                        sub_ds1.drop(index, inplace=True)
+            pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_understand + s1_names[key][i], sep=',',
+                                index_label=None, index=None)
+    return None
+
+
 def main():
     config_indicator = 1
     ch_obj = LoadConfig(config_indicator)
@@ -174,13 +187,20 @@ def main():
         # files are not exist.
         copy_clean_files_for_mutation(dest_files, base_files)
     elif flag == 3:
-        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, new_dataset_address,
+        ckjm = "E:\\apply\\york\\project\\source\\datasets\\file_level\\CKJM_datasets"
+        addr_ckjm_1 = "C:\\Users\\Nima\\Desktop\\addr_ckjm"
+        jmt = "E:\\apply\\york\\project\\source\\datasets\\file_level\\JMT_datasets"
+        understand = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
+        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, understand,
                                                                 drop_unused_columns='new')
 
         # rm_understand_misc_rows([new_ds_seri, new_ds_seri_name])
-        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, drwang_datasets,
-                                                                drop_unused_columns='old')
-        copy_status_to_new_dataset([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, addr_ckjm_1,
+                                                                drop_unused_columns='new')
+
+        find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+
+        # copy_status_to_new_dataset([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
     else:
         merg()
 

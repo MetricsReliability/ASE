@@ -1,5 +1,4 @@
 import random
-
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold
@@ -193,8 +192,7 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
 
-    dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration, drop_unused_columns=True,
-                                                                       drop_unused_selection=2)
+    dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration, drop_unused_columns="new")
 
     bench_obj = Benchmarks(dataset, dataset_names, datasets_file_names, configuration)
 
