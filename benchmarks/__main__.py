@@ -109,17 +109,17 @@ class Benchmarks:
         temp_result = [self.header2]
         for model_name, clf in zip(self.model_holder, self.classifiers):
             for ds_cat, ds_val in self.dataset.items():
-                for i, ds_version in enumerate(ds_val):
+                for i in range(len(ds_val)):
                     for j in range(i + 1, len(ds_val)):
                         ## think about attrib size for different releases.
-                        ds_val[i][:] = np.nan_to_num(ds_val[i])
-                        ds_val[j][:] = np.nan_to_num(ds_val[j])
+                        # ds_val[i][:] = np.nan_to_num(ds_val[i])
+                        # ds_val[j][:] = np.nan_to_num(ds_val[j])
                         self.s_attrib = DataPreprocessing.get_metrics_size(data=ds_val[j])
                         tr = np.array(ds_val[i])
                         ts = np.array(ds_val[j])
-                        X_train = tr[:, 0:-2]
+                        X_train = tr[:, 0:-1]
                         y_train = tr[:, -1]
-                        X_test = ts[:, 0:-2]
+                        X_test = ts[:, 0:-1]
                         y_test = ts[:, -1]
                         for iterations in range(self.config['iterations']):
                             clf.fit(X_train, y_train)

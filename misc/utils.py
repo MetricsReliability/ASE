@@ -15,35 +15,33 @@ from data_collection_manipulation.data_handler import IO, DataPreprocessing
 io_obj = IO()
 dp_obj = DataPreprocessing()
 
-drwang_datasets_equivalent_binary_files = "E:\\apply\\york\\project\\software\\releases\\binary releases\\xalan-j_2_4_0\\org\\"
+final_label_save_address = "C:\\Users\\Nima\\Desktop\\"
 
-drwang_datasets = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets"
+drwang_datasets = "E:\\apply\\york\\project\\dataset\\old_datasets\\jedit"
 # class file haye mojud dakhele record haye dataset haye dr wang.
-drwang_datasets_equivalent_source_codes = "E:\\apply\\york\\project\\software\\releases\\binary releases\\xalan-j_2_5_0\\org\\"
-
-new_dataset_address = "C:\\Users\\Nima\\Desktop\\ckjm"
-
+project_address = "E:\\apply\\york\\project\\software\\releases\\main source of projects\\jEdit-3.2\\org\\"
 # jayi ke class file hay miran baraye metric extraction.
-static_target_address = "E:\\apply\\york\\project\software\\metric extraction frameworks\\ckjm-1.9\\org\\"
-
-final_label_save_address = "C:\\Users\\Nima\\Desktop\\aaaa\\"
+CKJM_ADDRESS = "E:\\apply\\york\\project\\software\\metric extraction frameworks\\ckjm-1.9\\org\\"
+JMT_ADDRESS = "E:\\apply\\york\\project\\software\\metric extraction frameworks\\jmt\\"
+UNDERSTAND_ADDRESS = "C:\\mujava\\src\\main\\"
 
 
 def merg():
-    ds_addr = ""
-    out_addr = ""
+    ds_addr = "C:\\Users\\Nima\Desktop\\added\\jmt\\jedit\\jedit-4.0.csv"
+    out_addr = "C:\\Users\\Nima\Desktop\\added\\jmt\\jedit\\jedit-4.0.csv"
     _ds_ = pd.read_csv(filepath_or_buffer=ds_addr, index_col=None)
-    _oo_metrics = _ds_.iloc[2, 10]
+    # _oo_metrics = _ds_.iloc[2, 10]
     [m, n] = _ds_.shape
     for i in range(m):
-        _ds_.iloc[i, 0] = _ds_.iloc[i, 0] + "." + _ds_.iloc[i, 1]
-    _ds_ = _ds_.drop(['filename'], axis=1)
+        _ds_.iloc[i, 0] = _ds_.iloc[i, 1] + "." + _ds_.iloc[i, 0]
+    _ds_ = _ds_.drop(['category'], axis=1)
     _ds_.to_csv(out_addr, sep=',', index=None, header=True)
 
 
 def rm_understand_misc_rows(new_list):
     new_ds = new_list[0]
     new_ds_names = new_list[1]
+    # del new_ds['camel'][1]
     for key, value in new_ds.items():
         for i in range(len(value)):
             ds = value[i]
@@ -57,6 +55,7 @@ def rm_understand_misc_rows(new_list):
 def rm_empty_row(new_list):
     new_ds = new_list[0]
     new_ds_names = new_list[1]
+    # del new_ds['camel'][1]
     for key, value in new_ds.items():
         for i in range(len(value)):
             ds = value[i]
@@ -105,7 +104,7 @@ def get_list_of_clean_files(f):
     source = []
     for record in range(m):
         # if _ds_.iloc[record, -1] == 0:
-        name = _ds_.iloc[record, 2]
+        name = _ds_.iloc[record, 0]
         name = name.replace("org.", "")
         clean_files1.append(name)
         clean_files2.append(name)
@@ -115,8 +114,8 @@ def get_list_of_clean_files(f):
     for i, _file in enumerate(dest):
         _file = _file.replace(".", "\\")
         _file2 = _file.replace(".", "\\")
-        _file = static_target_address + _file + ".class"
-        _file2 = drwang_datasets_equivalent_source_codes + _file2 + ".class"
+        _file = UNDERSTAND_ADDRESS + _file + ".java"
+        _file2 = project_address + _file2 + ".java"
         dest[i] = _file
         source[i] = _file2
 
@@ -146,9 +145,10 @@ def copy_clean_files_for_mutation(dest_clean_files, base_clean_files):
 
 
 def find_nonoverlapping(s1, s2):
-    addr_ckjm = "C:\\Users\\Nima\\Desktop\\addr_ckjm\\"
-    addr_jmt = "C:\\Users\\Nima\\Desktop\\addr_jmt\\"
-    addr_understand = "C:\\Users\\Nima\\Desktop\\addr_understand\\"
+    addr_ckjm = "C:\\Users\\Nima\\Desktop\\added\\synched\\ckjm\\"
+    addr_jmt = "C:\\Users\\Nima\\Desktop\\added\\synched\\jmt\\"
+    addr_under = "C:\\Users\\Nima\\Desktop\\added\\synched\\understand\\"
+    addr_old = "C:\\Users\\Nima\\Desktop\\added\\synched\\old\\"
 
     s1_ds = s1[0]
     s1_names = s1[1]
@@ -162,12 +162,25 @@ def find_nonoverlapping(s1, s2):
             diff1to2 = set(sub_ds1.iloc[:, 0]).difference(sub_ds2.iloc[:, 0])
             diff2to1 = set(sub_ds2.iloc[:, 0]).difference(sub_ds1.iloc[:, 0])
 
-            for item in diff1to2:
-                for index, row in sub_ds1.iterrows():
-                    if item == row[0]:
-                        sub_ds1.drop(index, inplace=True)
-            pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_understand + s1_names[key][i], sep=',',
-                                index_label=None, index=None)
+            if diff1to2 is not None:
+                for item in diff1to2:
+                    for index, row in sub_ds1.iterrows():
+                        if item == row[0]:
+                            print(item)
+                            sub_ds1.drop(index, inplace=True)
+            if diff2to1 is not None:
+                for item in diff2to1:
+                    for index, row in sub_ds2.iterrows():
+                        if item == row[0]:
+                            print(item)
+                            sub_ds2.drop(index, inplace=True)
+            if diff1to2 is not None:
+                pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_ckjm + s1_names[key][i], sep=',',
+                                    index_label=None, index=None)
+            if diff2to1 is not None:
+                pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr_old + s2_names[key][i], sep=',',
+                                    index_label=None, index=None)
+
     return None
 
 
@@ -188,15 +201,16 @@ def main():
         copy_clean_files_for_mutation(dest_files, base_files)
     elif flag == 3:
         ckjm = "E:\\apply\\york\\project\\source\\datasets\\file_level\\CKJM_datasets"
-        addr_ckjm_1 = "C:\\Users\\Nima\\Desktop\\addr_ckjm"
         jmt = "E:\\apply\\york\\project\\source\\datasets\\file_level\\JMT_datasets"
-        understand = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
-        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, understand,
-                                                                drop_unused_columns='new')
+        under = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
+        old = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets_reduced"
+        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, ckjm,
+                                                                drop_unused_columns='misc')
 
+        # rm_empty_row([new_ds_seri, new_ds_seri_name])
         # rm_understand_misc_rows([new_ds_seri, new_ds_seri_name])
-        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, addr_ckjm_1,
-                                                                drop_unused_columns='new')
+        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, old,
+                                                                drop_unused_columns='misc')
 
         find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
 

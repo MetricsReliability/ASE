@@ -100,9 +100,11 @@ class IO:
                     if drop_unused_columns == 'old':
                         _ds_ = _ds_.drop(
                             [_ds_.columns[0], _ds_.columns[1]], axis='columns')
-                        # _ds_ = _ds_.drop(
-                        #     [_ds_.columns[0]], axis='columns')
-
+                    elif drop_unused_columns == 'new':
+                        _ds_ = _ds_.drop(
+                            [_ds_.columns[0]], axis='columns')
+                    else:
+                        pass
 
                     df_datasets_[ds_i][i] = _ds_
                     _df_dataset_names_[ds_i][i] = f.name
