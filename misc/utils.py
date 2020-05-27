@@ -175,13 +175,17 @@ def find_nonoverlapping(s1, s2):
                             print(item)
                             sub_ds2.drop(index, inplace=True)
             if diff1to2 is not None:
-                pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_ckjm + s1_names[key][i], sep=',',
+                pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_jmt + s1_names[key][i], sep=',',
                                     index_label=None, index=None)
             if diff2to1 is not None:
-                pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr_old + s2_names[key][i], sep=',',
+                pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr_ckjm + s2_names[key][i], sep=',',
                                     index_label=None, index=None)
 
     return None
+
+
+def replace_old_with_new_metrics(old_ds, new_ds):
+    return new_ds
 
 
 def main():
@@ -204,15 +208,18 @@ def main():
         jmt = "E:\\apply\\york\\project\\source\\datasets\\file_level\\JMT_datasets"
         under = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
         old = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets_reduced"
+        original = "E:\\apply\\york\\project\\dataset\\old_datasets"
         new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, ckjm,
                                                                 drop_unused_columns='misc')
 
         # rm_empty_row([new_ds_seri, new_ds_seri_name])
         # rm_understand_misc_rows([new_ds_seri, new_ds_seri_name])
-        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, old,
-                                                                drop_unused_columns='misc')
+        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, original,
+                                                                drop_unused_columns='old')
 
-        find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+        replace_old_with_new_metrics([old_ds_seri_name, old_ds_seri], [new_ds_seri_name, new_ds_seri])
+
+        # find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
 
         # copy_status_to_new_dataset([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
     else:
@@ -221,3 +228,18 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# for key, value in old_ds_seri.items():
+#          print(key)
+#          ds1 = value[0]
+#          ds2 = value[1]
+#          [m1, N1] = ds1.shape
+#          [m2, N2] = ds2.shape
+#          print((m1 + m2) / 2)
+#          ds1 = np.array(ds1)
+#          ds2 = np.array(ds2)
+#          a = np.where(ds1[:,-1] > 0)
+#          a1 = np.where(ds2[:, -1] > 0)
+#          b = len(a[0]) / m1
+#          b1 = len(a1[0]) / m2
+#          print((b + b1) / 2)

@@ -106,7 +106,6 @@ apache.lucene.search.PhraseQueue,2,0,0,2,4,0,0.0
 apache.lucene.search.TopFieldDocCollector,3,0,0,10,13,3,2.0
 apache.lucene.search.HitQueue,2,0,0,2,4,0,0.0
 apache.lucene.search.ReqExclScorer,7,0,0,3,16,6,0.0
-apache.lucene.search.RemoteSearchable_Stub,14,3,0,13,24,12,0.0
 apache.lucene.search.FilteredTermEnum,9,0,2,2,14,6,0.0
 apache.lucene.search.MultiTermQuery,7,0,2,8,27,6,0.0
 apache.lucene.search.BooleanScorer2,21,0,0,15,58,10,1.0

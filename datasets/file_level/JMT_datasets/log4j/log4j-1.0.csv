@@ -46,7 +46,6 @@ apache.log4j.helpers.PatternParser,1.0,8.0,2.0,0.0,28.0,48.0,1.0
 apache.log4j.Priority,8.0,10.0,2.0,0.0,3.0,15.0,1.0
 apache.log4j.varia.PriorityMatchFilter,1.0,4.0,3.0,0.0,6.0,8.0,1.0
 apache.log4j.PropertyConfigurator,17.0,19.0,3.0,0.0,29.0,95.0,2.0
-apache.log4j.PropertyWatchdog,2.0,2.0,3.0,0.0,4.0,5.0,0.0
 apache.log4j.ProvisionNode,0.0,1.0,2.0,0.0,2.0,3.0,0.0
 apache.log4j.helpers.QuietWriter,3.0,4.0,2.0,2.0,7.0,13.0,0.0
 apache.log4j.helpers.RelativeTimeDateFormat,2.0,3.0,2.0,0.0,5.0,7.0,0.0

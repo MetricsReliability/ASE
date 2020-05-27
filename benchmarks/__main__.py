@@ -45,12 +45,12 @@ class PerformanceEvaluation:
         perf_pack = []
         a = classification_report(actual, pred, output_dict=True)
         if self.precision_flag:
-            perf_pack.append(round(a['2.0']['precision'], 2))
+            perf_pack.append(round(a['macro avg']['precision'], 2))
         if self.recall_flag:
-            perf_pack.append(round(a['2.0']['recall'], 2))
+            perf_pack.append(round(a['macro avg']['recall'], 2))
         if self.F1_flag:
             # f1 = 2 * a['2.0']['precision'] * a['2.0']['recall'] / (a['2.0']['precision'] + a['2.0']['recall'])
-            perf_pack.append(round(a['2.0']['f1-score'], 2))
+            perf_pack.append(round(a['macro avg']['f1-score'], 2))
         if self.ACC_flag:
             ACC = accuracy_score(actual, pred)
             perf_pack.append(round(ACC, 2))
@@ -58,8 +58,8 @@ class PerformanceEvaluation:
             MCC = matthews_corrcoef(actual, pred, sample_weight=None)
             perf_pack.append(round(MCC, 2))
         if self.AUC_flag:
-            _auc = roc_auc_score(actual, pred, average=None)
-            perf_pack.append(round(roc_auc_score(actual, pred, average=None), 2))
+            _auc = roc_auc_score(actual, pred, average='micro')
+            perf_pack.append(round(roc_auc_score(actual, pred, average='micro'), 2))
 
         # conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
         #

@@ -30,7 +30,7 @@ file_level_different_release_results_list_of_clean_buggy: "E:\\apply\\york\\proj
 change_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\change_level"
 
 # change here
-file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\buggy\\diff_understand.csv"
+file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\macro_averaged\\diff_understand.csv"
 file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
 
 

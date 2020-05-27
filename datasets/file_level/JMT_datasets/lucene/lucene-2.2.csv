@@ -106,7 +106,6 @@ apache.lucene.store.RAMOutputStream,8.0,8.0,4.0,0.0,9.0,23.0,4.0
 apache.lucene.search.RangeFilter,5.0,7.0,3.0,0.0,11.0,31.0,3.0
 apache.lucene.search.RangeQuery,15.0,9.0,3.0,0.0,15.0,33.0,2.0
 apache.lucene.search.RemoteSearchable,11.0,12.0,2.0,0.0,11.0,30.0,0.0
-apache.lucene.search.RemoteSearchable_Stub,10.0,13.0,2.0,0.0,24.0,24.0,0.0
 apache.lucene.search.ReqExclScorer,2.0,7.0,3.0,0.0,4.0,17.0,0.0
 apache.lucene.search.ReqOptSumScorer,2.0,6.0,3.0,0.0,4.0,15.0,0.0
 apache.lucene.search.ScoreDoc,0.0,1.0,2.0,1.0,3.0,2.0,0.0
