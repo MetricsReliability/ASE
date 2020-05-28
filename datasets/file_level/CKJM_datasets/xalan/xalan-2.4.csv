@@ -1,4 +1,4 @@
-filename,WMC,DIT,NOC,CBO, RFC,NPM,bug
+filename,wmc,dit,noc,cbo,rfc,npm,bug
 apache.xalan.Version,9,1,0,1,15,9,0.0
 apache.xalan.client.XSLTProcessorApplet,29,5,0,2,73,21,0.0
 apache.xalan.extensions.ExtensionsTable,6,1,0,6,21,6,1.0

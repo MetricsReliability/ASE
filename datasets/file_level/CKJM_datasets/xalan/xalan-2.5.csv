@@ -1,4 +1,4 @@
-filename,WMC,DIT,NOC,CBO, RFC,NPM,bug
+filename,wmc,dit,noc,cbo,rfc,npm,bug
 apache.xalan.extensions.ExtensionsTable,7,1,0,7,25,7,1.0
 apache.xalan.extensions.ExtensionHandlerGeneral,8,0,0,16,53,6,2.0
 apache.xalan.extensions.ExtensionNamespaceSupport,3,1,0,1,12,3,0.0

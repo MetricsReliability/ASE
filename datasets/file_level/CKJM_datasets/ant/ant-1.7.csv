@@ -1,4 +1,4 @@
-filename,WMC,DIT,NOC,CBO,RFC,NPM,bug
+filename,wmc,dit,noc,cbo,rfc,npm,bug
 apache.tools.ant.ExitStatusException,4,0,0,2,7,4,0.0
 apache.tools.ant.NoBannerLogger,4,0,0,4,16,4,1.0
 apache.tools.ant.Main,24,1,0,17,126,5,4.0
@@ -419,4 +419,3 @@ apache.tools.zip.UnrecognizedExtraField,10,1,0,2,13,10,1.0
 apache.tools.zip.ZipLong,10,1,0,0,11,10,1.0
 apache.tools.zip.JarMarker,9,1,0,2,12,8,0.0
 apache.tools.zip.ZipEntry,27,2,0,3,53,23,1.0
-apache.tools.zip.AsiExtraField,20,1,0,4,40,18,1.0

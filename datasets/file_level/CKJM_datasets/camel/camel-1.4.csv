@@ -1,4 +1,4 @@
-filename,WMC,DIT,NOC,CBO,RFC,NPM,bug
+filename,wmc,dit,noc,cbo,rfc,npm,bug
 apache.camel.RuntimeTransformException,3,0,0,1,6,3,0.0
 apache.camel.NoTypeConversionAvailableException,4,0,0,1,11,4,1.0
 apache.camel.CamelException,4,3,2,0,8,4,1.0

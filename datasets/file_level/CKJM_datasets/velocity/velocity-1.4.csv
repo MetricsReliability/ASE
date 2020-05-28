@@ -1,4 +1,4 @@
-filename,WMC,DIT,NOC,CBO, RFC,NPM,bug
+filename,wmc,dit,noc,cbo,rfc,npm,bug
 apache.velocity.VelocityContext,10,0,0,2,20,10,1.0
 apache.velocity.Template,4,0,0,13,25,4,2.0
 apache.velocity.anakia.AnakiaElement,12,0,0,6,27,11,1.0

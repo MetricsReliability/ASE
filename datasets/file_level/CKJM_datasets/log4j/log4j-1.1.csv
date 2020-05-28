@@ -1,4 +1,4 @@
-filename,WMC,DIT,NOC,CBO, RFC,NPM,bug
+filename,wmc,dit,noc,cbo,rfc,npm,bug
 apache.log4j.BasicConfigurator,14,1,1,11,36,10,2.0
 apache.log4j.DefaultCategoryFactory,2,1,0,2,4,1,0.0
 apache.log4j.AppenderSkeleton,22,1,2,9,34,21,4.0

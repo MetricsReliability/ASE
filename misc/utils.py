@@ -150,6 +150,10 @@ def find_nonoverlapping(s1, s2):
     addr_under = "C:\\Users\\Nima\\Desktop\\added\\synched\\understand\\"
     addr_old = "C:\\Users\\Nima\\Desktop\\added\\synched\\old\\"
 
+    original_ckjm = "C:\\Users\\Nima\\Desktop\\original_replaced\\ckjm\\"
+    original_jmt = "C:\\Users\\Nima\\Desktop\\original_replaced\\jmt\\"
+    original_understand = "C:\\Users\\Nima\\Desktop\\original_replaced\\understand\\"
+
     s1_ds = s1[0]
     s1_names = s1[1]
     s2_names = s2[1]
@@ -159,32 +163,55 @@ def find_nonoverlapping(s1, s2):
         for i in range(len(value)):
             sub_ds1 = value[i]
             sub_ds2 = to_compare[i]
+
             diff1to2 = set(sub_ds1.iloc[:, 0]).difference(sub_ds2.iloc[:, 0])
             diff2to1 = set(sub_ds2.iloc[:, 0]).difference(sub_ds1.iloc[:, 0])
 
-            if diff1to2 is not None:
-                for item in diff1to2:
-                    for index, row in sub_ds1.iterrows():
-                        if item == row[0]:
-                            print(item)
-                            sub_ds1.drop(index, inplace=True)
-            if diff2to1 is not None:
-                for item in diff2to1:
-                    for index, row in sub_ds2.iterrows():
-                        if item == row[0]:
-                            print(item)
-                            sub_ds2.drop(index, inplace=True)
-            if diff1to2 is not None:
-                pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_jmt + s1_names[key][i], sep=',',
-                                    index_label=None, index=None)
-            if diff2to1 is not None:
-                pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr_ckjm + s2_names[key][i], sep=',',
-                                    index_label=None, index=None)
+            sub_ds2 = sub_ds2.set_index('name')
+            if len(diff2to1) != 0:
+                sub_ds2 = sub_ds2.drop(diff2to1)
+            if len(diff1to2) != 0:
+                sub_ds1 = sub_ds1.drop(diff1to2)
+            sub_ds2 = sub_ds2.reindex(index=sub_ds1['filename'])
+            sub_ds2 = sub_ds2.reset_index()
+
+            # pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_ckjm + s1_names[key][i], sep=',',
+            #                     index_label=None, index=None)
+            pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr_old + s2_names[key][i], sep=',',
+                                index_label=None, index=None)
+
+            # sub_ds2 = sub_ds2.reindex(index=sub_ds1['filename'])
+            # sub_ds2 = sub_ds2.reset_index()
+            #
+            # pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr + s2_names[key][i], sep=',',
+            #                     index_label=None, index=None)
+
+            # if len(diff1to2) != 0:
+            #     for item in diff1to2:
+            #         for index, row in sub_ds1.iterrows():
+            #             if item == row[0]:
+            #                 print(item)
+            #                 sub_ds1.drop(index, inplace=True)
+            # idx = []
+            # if len(diff2to1) != 0:
+            #     for item in diff2to1:
+            #         for index, row in sub_ds2.iterrows():
+            #             if item == row[0]:
+            #                 print(item)
+            #                 idx.append(index)
+            # sub_ds2.drop(idx, inplace=True)
 
     return None
 
 
 def replace_old_with_new_metrics(old_ds, new_ds):
+    datasets_new = new_ds[1]
+    datasets_old = old_ds[1]
+    for key, value in datasets_new.items():
+        to_compare = datasets_old[key]
+        for i in range(len(value)):
+            sub_ds1 = value[i]
+            sub_ds2 = to_compare[i]
     return new_ds
 
 
@@ -209,21 +236,44 @@ def main():
         under = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
         old = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets_reduced"
         original = "E:\\apply\\york\\project\\dataset\\old_datasets"
-        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, ckjm,
+
+        temp = "C:\\Users\\Nima\\Desktop\\added\\synched\\ckjm"
+
+        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, temp,
                                                                 drop_unused_columns='misc')
 
         # rm_empty_row([new_ds_seri, new_ds_seri_name])
         # rm_understand_misc_rows([new_ds_seri, new_ds_seri_name])
-        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, original,
-                                                                drop_unused_columns='old')
+        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, old,
+                                                                drop_unused_columns='misc')
 
-        replace_old_with_new_metrics([old_ds_seri_name, old_ds_seri], [new_ds_seri_name, new_ds_seri])
+        # replace_old_with_new_metrics([old_ds_seri_name, old_ds_seri], [new_ds_seri_name, new_ds_seri])
 
-        # find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+        find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+
+        # order([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name], original_ckjm)
 
         # copy_status_to_new_dataset([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
     else:
         merg()
+
+
+def order(ds1, ds2, addr):
+    dataset1 = ds1[0]
+    dataset2 = ds2[0]
+    s2_names = ds2[1]
+    for key, value in dataset1.items():
+        to_compare = dataset2[key]
+        for i in range(len(value)):
+            sub_ds1 = value[i]
+            sub_ds2 = to_compare[i]
+            sub_ds2 = sub_ds2.set_index('name')
+            sub_ds2 = sub_ds2.reindex(index=sub_ds1['filename'])
+            sub_ds2 = sub_ds2.reset_index()
+
+            pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr + s2_names[key][i], sep=',',
+                                index_label=None, index=None)
+    return None
 
 
 if __name__ == '__main__':
