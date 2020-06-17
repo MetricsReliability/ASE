@@ -17,7 +17,7 @@ dp_obj = DataPreprocessing()
 
 final_label_save_address = "C:\\Users\\Nima\\Desktop\\"
 
-drwang_datasets = "E:\\apply\\york\\project\\dataset\\old_datasets\\jedit"
+drwang_datasets = "E:\\apply\\york\\project\\dataset\\raw_original_datasets\\jedit"
 # class file haye mojud dakhele record haye dataset haye dr wang.
 project_address = "E:\\apply\\york\\project\\software\\releases\\main source of projects\\jEdit-3.2\\org\\"
 # jayi ke class file hay miran baraye metric extraction.
@@ -150,9 +150,9 @@ def find_nonoverlapping(s1, s2):
     addr_under = "C:\\Users\\Nima\\Desktop\\added\\synched\\understand\\"
     addr_old = "C:\\Users\\Nima\\Desktop\\added\\synched\\old\\"
 
-    original_ckjm = "C:\\Users\\Nima\\Desktop\\original_replaced\\ckjm\\"
-    original_jmt = "C:\\Users\\Nima\\Desktop\\original_replaced\\jmt\\"
-    original_understand = "C:\\Users\\Nima\\Desktop\\original_replaced\\understand\\"
+    replaced_ckjm = "C:\\Users\\Nima\\Desktop\\original_replaced\\ckjm\\"
+    replaced_jmt = "C:\\Users\\Nima\\Desktop\\original_replaced\\jmt\\"
+    replaced_understand = "C:\\Users\\Nima\\Desktop\\original_replaced\\understand\\"
 
     s1_ds = s1[0]
     s1_names = s1[1]
@@ -177,7 +177,7 @@ def find_nonoverlapping(s1, s2):
 
             # pd.DataFrame.to_csv(sub_ds1, path_or_buf=addr_ckjm + s1_names[key][i], sep=',',
             #                     index_label=None, index=None)
-            pd.DataFrame.to_csv(sub_ds2, path_or_buf=addr_old + s2_names[key][i], sep=',',
+            pd.DataFrame.to_csv(sub_ds2, path_or_buf=final_label_save_address + s2_names[key][i], sep=',',
                                 index_label=None, index=None)
 
             # sub_ds2 = sub_ds2.reindex(index=sub_ds1['filename'])
@@ -235,25 +235,39 @@ def main():
         jmt = "E:\\apply\\york\\project\\source\\datasets\\file_level\\JMT_datasets"
         under = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
         old = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets_reduced"
-        original = "E:\\apply\\york\\project\\dataset\\old_datasets"
 
-        temp = "C:\\Users\\Nima\\Desktop\\added\\synched\\ckjm"
+        original = "E:\\apply\\york\\project\\source\\datasets\\file_level\\original_datasets"
 
-        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, temp,
+        new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, ckjm,
                                                                 drop_unused_columns='misc')
 
         # rm_empty_row([new_ds_seri, new_ds_seri_name])
         # rm_understand_misc_rows([new_ds_seri, new_ds_seri_name])
-        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, old,
+        old_ds_seri_name, old_ds_seri, _ = io_obj.load_datasets(configuration, original,
                                                                 drop_unused_columns='misc')
 
         # replace_old_with_new_metrics([old_ds_seri_name, old_ds_seri], [new_ds_seri_name, new_ds_seri])
 
-        find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+        # find_nonoverlapping([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
 
         # order([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name], original_ckjm)
 
         # copy_status_to_new_dataset([new_ds_seri, new_ds_seri_name], [old_ds_seri, old_ds_seri_name])
+
+        for key, value in old_ds_seri.items():
+                 print(key)
+                 ds1 = value[0]
+                 ds2 = value[1]
+                 [m1, N1] = ds1.shape
+                 [m2, N2] = ds2.shape
+                 print((m1 + m2) / 2)
+                 ds1 = np.array(ds1)
+                 ds2 = np.array(ds2)
+                 a = np.where(ds1[:,-1] > 0)
+                 a1 = np.where(ds2[:, -1] > 0)
+                 b = len(a[0]) / m1
+                 b1 = len(a1[0]) / m2
+                 print((b + b1) / 2)
     else:
         merg()
 
@@ -279,17 +293,4 @@ def order(ds1, ds2, addr):
 if __name__ == '__main__':
     main()
 
-# for key, value in old_ds_seri.items():
-#          print(key)
-#          ds1 = value[0]
-#          ds2 = value[1]
-#          [m1, N1] = ds1.shape
-#          [m2, N2] = ds2.shape
-#          print((m1 + m2) / 2)
-#          ds1 = np.array(ds1)
-#          ds2 = np.array(ds2)
-#          a = np.where(ds1[:,-1] > 0)
-#          a1 = np.where(ds2[:, -1] > 0)
-#          b = len(a[0]) / m1
-#          b1 = len(a1[0]) / m2
-#          print((b + b1) / 2)
+

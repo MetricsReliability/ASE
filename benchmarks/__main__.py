@@ -1,20 +1,152 @@
 import random
+from sklearn.utils import shuffle
 import numpy as np
+from sklearn import svm
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold
 from sklearn.metrics import accuracy_score, matthews_corrcoef, \
     roc_auc_score, classification_report
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import KFold
 from data_collection_manipulation.data_handler import IO
 from configuration_files.setup_config import LoadConfig
 from data_collection_manipulation.data_handler import DataPreprocessing
+from sklearn import tree
 import pandas as pd
+from libs.MLMNB_package_python import MLMNB
+from sklearn.preprocessing import KBinsDiscretizer
+import libs.entropy_estimators as ee
+from scipy import stats
 
 gnb_obj = GaussianNB()
 rnd_obj = RandomForestClassifier()
 dh_obj = IO()
+
+disc = KBinsDiscretizer(n_bins=10, encode='ordinal')
+from latent_base import AmlmnbBase
+from latents import AMLMNB
+
+
+def selection_sort(pval, index):
+    n = len(pval)
+    for i in range(n):
+        jmin = i
+        for j in range(i + 1, n):
+            if pval[j] < pval[jmin]:
+                jmin = j
+        if jmin != i:
+            temp1 = pval[i]
+            temp2 = index[i]
+            pval[i] = pval[jmin]
+            index[i] = index[jmin]
+            pval[jmin] = temp1
+            index[jmin] = temp2
+    return pval, index
+
+
+def discretize(data, bins):
+    split = np.array_split(np.sort(data), bins)
+    cutoffs = [x[-1] for x in split]
+    cutoffs = cutoffs[:-1]
+    discrete = np.digitize(data, cutoffs, right=True)
+    return discrete, cutoffs
+
+
+def feature_selection(tr, ts):
+    [m, N] = np.shape(tr)
+    tr_cmi = np.zeros((N - 1, N - 1))
+    ts_cmi = np.zeros((N - 1, N - 1))
+
+    single_var_cmi = np.zeros((1, N - 1))
+    p_store_tr_single = np.zeros((1, N - 1))
+
+    p_store_tr = np.zeros((N - 1, N - 1))
+    p_store_ts = np.zeros((N - 1, N - 1))
+
+    u_tr = []
+    u_ts = []
+    for k in range(0, N - 1):
+        unique1, counts1 = np.unique(tr[:, k], return_counts=True)
+        unique2, counts2 = np.unique(ts[:, k], return_counts=True)
+        u_tr.append(unique1)
+        u_ts.append(unique2)
+
+    for i in range(N - 1):
+        for j in range(N - 1):
+            if i != j:
+                tr_cmi[i, j] = ee.cmidd(tr[:, i], tr[:, j], tr[:, -1])
+                ts_cmi[i, j] = ee.cmidd(ts[:, i], ts[:, j], ts[:, -1])
+
+    for n in range(N - 1):
+        single_var_cmi[0, n] = ee.midd(tr[:, n], tr[:, -1])
+
+    single_var_cmi = np.argsort(single_var_cmi)
+    selected_idx = []
+
+    idx = np.size(single_var_cmi, 1)
+    k = 0
+    while k != 5:
+        selected_idx.append(single_var_cmi[0, idx - 1])
+        idx -= 1
+        k += 1
+
+    for n in range(N - 1):
+        d1 = (len(u_tr[n]) - 1)
+        p_store_tr_single[0][n] = stats.chi2.pdf(single_var_cmi[0, n], d1)
+
+    for j in range(N - 1):
+        for i in range(N - 1):
+            if i != j:
+                d1 = (len(u_tr[j]) - 1) + (len(u_tr[i]) - 1)
+                d2 = (len(u_ts[j]) - 1) + (len(u_ts[i]) - 1)
+                p_store_tr[j][i] = stats.chi2.cdf(tr_cmi[j, i], d1)
+                p_store_ts[j][i] = stats.chi2.cdf(ts_cmi[j, i], d2)
+
+    latent_variables = []
+    state_space = []
+    p_value_vec_tr = []
+    index_vec_tr = []
+    p_value_vec_ts = []
+    index_vec_ts = []
+    for i in range(N - 1):
+        for j in range(N - 1):
+            if i < j:
+                p_value_vec_tr.append(tr_cmi[i][j])
+                p_value_vec_ts.append(ts_cmi[i][j])
+                index_vec_tr.append([i, j])
+                index_vec_ts.append([i, j])
+    [p_val_tr, index_tr] = selection_sort(p_value_vec_tr, index_vec_tr)
+    [p_val_ts, index_ts] = selection_sort(p_value_vec_ts, index_vec_ts)
+
+    k = 0
+    for i, _ in reversed(list(enumerate(p_val_tr))):
+        latent_variables.append(index_tr[i])
+        k += 1
+        if k >= N - 1:
+            break
+
+    latent_tuples = [tuple(item) for item in latent_variables]
+    p1 = []
+    p2 = []
+    for v1, v2 in latent_tuples:
+        p1.append(v1)
+        p2.append(v2)
+    p1 = set(p1)
+    p2 = set(p2)
+    new_latent_list = []
+    new_state_space = []
+    if len(p1) != len(p2):
+        for i in range(min(len(p1), len(p2))):
+            new_latent_list.append([list(p1)[i], list(p2)[i]])
+    p1 = list(p1)
+    p1.append(N - 1)
+
+    selected_idx.append(N - 1)
+    tr = tr[:, selected_idx]
+    ts = ts[:, selected_idx]
+    return tr, ts
 
 
 class PerformanceEvaluation:
@@ -41,16 +173,16 @@ class PerformanceEvaluation:
             if measure == 'AUC':
                 self.AUC_flag = True
 
-    def compute_measures(self, X_train, X_test, actual, pred, s_attrib):
+    def compute_measures(self, actual, pred):
         perf_pack = []
+
         a = classification_report(actual, pred, output_dict=True)
         if self.precision_flag:
-            perf_pack.append(round(a['macro avg']['precision'], 2))
+            perf_pack.append(round(a['weighted avg']['precision'], 2))
         if self.recall_flag:
-            perf_pack.append(round(a['macro avg']['recall'], 2))
+            perf_pack.append(round(a['weighted avg']['recall'], 2))
         if self.F1_flag:
-            # f1 = 2 * a['2.0']['precision'] * a['2.0']['recall'] / (a['2.0']['precision'] + a['2.0']['recall'])
-            perf_pack.append(round(a['macro avg']['f1-score'], 2))
+            perf_pack.append(round(a['weighted avg']['f1-score'], 2))
         if self.ACC_flag:
             ACC = accuracy_score(actual, pred)
             perf_pack.append(round(ACC, 2))
@@ -58,19 +190,8 @@ class PerformanceEvaluation:
             MCC = matthews_corrcoef(actual, pred, sample_weight=None)
             perf_pack.append(round(MCC, 2))
         if self.AUC_flag:
-            _auc = roc_auc_score(actual, pred, average='micro')
-            perf_pack.append(round(roc_auc_score(actual, pred, average='micro'), 2))
-
-        # conf_mat = confusion_matrix(actual, pred, labels=range(s_attrib[-1]))
-        #
-        # num_incorrect = ((actual != pred).sum())
-        # num_correct = ((actual == pred).sum())
-        # num_training_instances = X_train.shape[0]
-        # num_test_instances = X_test.shape[0]
-        # percent_incorrect = (num_incorrect / num_test_instances)
-
-        # stat = [num_training_instances, num_test_instances, num_correct, num_incorrect, percent_incorrect]
-        # perf_pack.append(stat)
+            _auc = roc_auc_score(actual, pred, average=None)
+            perf_pack.append(round(roc_auc_score(actual, pred, average="weighted"), 2))
         return perf_pack
 
 
@@ -85,26 +206,113 @@ class Benchmarks:
         if self.config['cross_validation_type'] == 1:
             self.validator = LeaveOneOut()
         elif self.config['cross_validation_type'] == 2:
-            self.validator = StratifiedKFold()
+            self.validator = StratifiedKFold(n_splits=10, random_state=2, shuffle=True)
         elif self.config['cross_validation_type'] == 3:
             self.validator = KFold(n_splits=self.config['number_of_folds'])
-
+        # n_estimators=1, bootstrap=False, n_jobs=-1, max_depth=3, max_features=None,
+        #                                    random_state=99
         self.classifiers = [
-            RandomForestClassifier(n_estimators=1, bootstrap=False, n_jobs=-1, max_depth=3, max_features=None,
-                                   random_state=99),
-            GaussianNB(), LogisticRegression()]
+            RandomForestClassifier(),
+            GaussianNB(), LogisticRegression(), tree.DecisionTreeClassifier(), svm.SVC(),
+            KNeighborsClassifier(n_neighbors=3)]
 
         self.header2 = ["Defect models", "projects' category", "Tr version", "Ts version", "Iterations",
-                        "Precision", "Recall", "F1", "ACC", "MCC", "AUC"]
+                        "Precision", "Recall", "F1 Score", "ACC", "MCC", "AUC"]
 
         self.header1 = ["File name", "original status", "predicted status"]
+
+        self.cv_header = ["Key_Dataset", "Key_Run", "Key_Fold", "Key_Scheme", "Precsion", "Recall", "F1_Score", "ACC",
+                          "MCC", "AUC"]
 
         self.perf_obj = PerformanceEvaluation(self.config)
 
         self.temp_addr = "E:\\apply\\york\\project\\source\\outputs\\file_level" \
                          "\\different_releases_tr_ts\\res_jmt.csv"
 
+    def differen_release_MLMNB(self):
+        binning = True
+        self.config_MLMNB = {}
+        self.dataset = DataPreprocessing.binerize_class(self.dataset)
+        temp_result = [self.header2]
+        for iterations in range(self.config['iterations']):
+            for latent_size in range(1, 8):
+                print(latent_size)
+                self.config_MLMNB['latent_size'] = latent_size
+                for ds_cat, ds_val in self.dataset.items():
+                    for i in range(len(ds_val)):
+                        for j in range(i + 1, len(ds_val)):
+                            print(ds_cat)
+                            tr = np.array(ds_val[j])
+                            ts = np.array(ds_val[i])
+
+                            # [tr, ts] = feature_selection(tr, ts)
+
+                            learner = AmlmnbBase(h=[], h_states=[latent_size], delta=0.01, alpha=0.000001)
+
+                            if binning:
+                                # tr[:, 0:-1] = disc.fit_transform(tr[:, 0:-1])
+                                # ts[:, 0:-1] = disc.fit_transform(ts[:, 0:-1])
+                                # 3, 4, 5, 6, 9, 10, 11, 13, 14, 17, 19]
+                                reduced_tr = np.delete(tr, [9, 11, 13, 14, 17, 19], axis=1)
+                                reduced_ts = np.delete(ts, [9, 11, 13, 14, 17, 19], axis=1)
+                                discretized_tr = disc.fit_transform(tr[:, [9, 11, 13, 14, 17, 19]])
+                                discretized_ts = disc.fit_transform(ts[:, [9, 11, 13, 14, 17, 19]])
+                                tr = np.concatenate((discretized_tr, reduced_tr), axis=1)
+                                ts = np.concatenate((discretized_ts, reduced_ts), axis=1)
+                            whole_data = np.concatenate((tr, ts), axis=0)
+                            learner.fit(tr[:, 0:-1], tr[:, -1], 100)
+                            nominal_pred = learner.predict(ts[:, 0:-1])
+                            # self.s_attrib = DataPreprocessing.get_metrics_size(data=whole_data)
+                            # [m, N] = np.shape(tr)
+                            # self.config_MLMNB['class_size'] = self.s_attrib[-1]
+                            # self.config_MLMNB['num_attribute'] = N - 1
+                            # self.config_MLMNB['num_sample'] = m
+                            # self.config_MLMNB['class_index'] = N
+                            # self.config_MLMNB['attribute_size'] = self.s_attrib[0:-1]
+                            # self.mlmnb_obj = MLMNB(self.config_MLMNB)
+                            # params = self.mlmnb_obj.expectationMaximization(tr)
+
+                            # prob = np.zeros((self.config_MLMNB['class_size'], 1), dtype=np.longfloat)
+
+                            # for counter in range(len(ts)):
+                            #     a = self.mlmnb_obj.inference(params, ts[counter, :])
+                            #     prob = np.concatenate((prob, a), axis=1)
+                            # prob = np.delete(prob, 0, 1)
+
+                            # y_pred = []
+                            # for v in range(np.size(prob, 1)):
+                            #     y_pred.append(np.argmax(prob[:, v]) + 1)
+                            # y_pred = np.array(y_pred)
+                            # y_true = ts[:, N - 1]
+
+                            y_true = ts[:, -1]
+                            y_pred = np.array(nominal_pred)
+
+                            perf_holder = self.perf_obj.compute_measures(y_true, y_pred)
+
+                            release_pack = ["MLMNB" + str(latent_size), ds_cat, self.dataset_names[ds_cat][i],
+                                            self.dataset_names[ds_cat][j], iterations,
+                                            *perf_holder]
+
+                            a = pd.concat(
+                                [self.dataset_file_names[ds_cat][j], pd.DataFrame(y_true.reshape((-1, 1))).reindex(
+                                    self.dataset_file_names[ds_cat][j].index),
+                                 pd.DataFrame(y_pred.reshape((-1, 1))).reindex(
+                                     self.dataset_file_names[ds_cat][j].index)], axis=1, ignore_index=True)
+
+                            a.columns = self.header1
+                            temp_result.append(release_pack)
+
+                            addr = self.temp_addr + "MLMNB" + str(latent_size) + "_" + "Iteration {}".format(
+                                iterations) + "_" + self.dataset_names[ds_cat][j]
+
+                            # pd.DataFrame.to_csv(a, path_or_buf=addr, sep=',')
+                            dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_whole'])
+        return None
+
     def different_release(self):
+        binning = True
+        self.config_MLMNB = {}
         self.dataset = DataPreprocessing.binerize_class(self.dataset)
         temp_result = [self.header2]
         for model_name, clf in zip(self.model_holder, self.classifiers):
@@ -114,9 +322,21 @@ class Benchmarks:
                         ## think about attrib size for different releases.
                         # ds_val[i][:] = np.nan_to_num(ds_val[i])
                         # ds_val[j][:] = np.nan_to_num(ds_val[j])
-                        self.s_attrib = DataPreprocessing.get_metrics_size(data=ds_val[j])
                         tr = np.array(ds_val[i])
                         ts = np.array(ds_val[j])
+
+                        if binning:
+                            tr[:, 0:-1] = disc.fit_transform(tr[:, 0:-1])
+                            ts[:, 0:-1] = disc.fit_transform(ts[:, 0:-1])
+                            # reduced_tr = np.delete(tr, [3, 4, 5, 6, 9, 10, 11, 13, 14, 17, 19], axis=1)
+                            # reduced_ts = np.delete(ts, [3, 4, 5, 6, 9, 10, 11, 13, 14, 17, 19], axis=1)
+                            # discretized_tr = disc.fit_transform(tr[:, [3, 4, 5, 6, 9, 10, 11, 13, 14, 17, 19]])
+                            # discretized_ts = disc.fit_transform(ts[:, [3, 4, 5, 6, 9, 10, 11, 13, 14, 17, 19]])
+                            # tr = np.concatenate((discretized_tr, reduced_tr), axis=1)
+                            # ts = np.concatenate((discretized_ts, reduced_ts), axis=1)
+
+                        self.s_attrib = DataPreprocessing.get_metrics_size(data=tr)
+
                         X_train = tr[:, 0:-1]
                         y_train = tr[:, -1]
                         X_test = ts[:, 0:-1]
@@ -127,8 +347,7 @@ class Benchmarks:
                             y_pred = clf.predict(X_test)
 
                             print(self.dataset_names[ds_cat][i])
-                            perf_holder = self.perf_obj.compute_measures(X_train, X_test, y_test, y_pred,
-                                                                         self.s_attrib)
+                            perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
 
                             release_pack = [model_name, ds_cat, self.dataset_names[ds_cat][i],
                                             self.dataset_names[ds_cat][j], iterations,
@@ -150,41 +369,65 @@ class Benchmarks:
 
             dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_whole'])
 
+    def delete_unused_NASA_metrics(self, _dataset, ds_cat):
+        if ds_cat == "CM1":
+            reduced_dataset = np.delete(_dataset, [7, 9, 11, 14, 17, 18, 19, 20, 22, 23, 24, 25, 29, 35], axis=1)
+            discretized_tr = disc.fit_transform(_dataset[:, [7, 9, 11, 14, 17, 18, 19, 20, 22, 23, 24, 25, 29, 35]])
+            _dataset = np.concatenate((discretized_tr, reduced_dataset), axis=1)
+        if ds_cat == "JM1":
+            reduced_dataset = np.delete(_dataset, [8, 9, 10, 11, 13, 14, 15], axis=1)
+            discretized_tr = disc.fit_transform(_dataset[:, [8, 9, 10, 11, 13, 14, 15]])
+            _dataset = np.concatenate((discretized_tr, reduced_dataset), axis=1)
+        if ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
+            reduced_dataset = np.delete(_dataset, [5, 6, 7, 8, 9, 10, 11], axis=1)
+            discretized_tr = disc.fit_transform(_dataset[:, [5, 6, 7, 8, 9, 10, 11]])
+            _dataset = np.concatenate((discretized_tr, reduced_dataset), axis=1)
+        return _dataset
+
     def cross_validation(self):
-        temp_result = []
+        temp_result = [self.cv_header]
+        self.model_holder.append("MLMNB")
+        children = []
+        self.dataset = DataPreprocessing.binerize_class(self.dataset)
         for model_name, clf in zip(self.model_holder, self.classifiers):
-            for key_dataset in range(len(self.dataset)):
-                _dataset = np.array(self.dataset[key_dataset])
-                for key_iter in range(self.config['iterations']):
-                    X = _dataset[:, 0:-1]
-                    y = _dataset[:, -1]
+            for ds_cat, ds_val in self.dataset.items():
+                for i in range(len(ds_val)):
+                    for k in range(np.size(ds_val[i], 1) - 1):
+                        children.append(k)
+                    learner = AmlmnbBase(h=[children], h_states=[10], delta=0.01, alpha=0.00001)
+                    self.classifiers.append(learner)
+                    _dataset = np.array(ds_val[i])
+                    if ds_cat == "CM1" or ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
+                        _dataset = self.delete_unused_NASA_metrics(_dataset, ds_cat)
+                    else:
+                        reduced_tr = np.delete(_dataset, [9, 11, 13, 14, 17, 19], axis=1)
+                        discretized_tr = disc.fit_transform(_dataset[:, [9, 11, 13, 14, 17, 19]])
+                        _dataset = np.concatenate((discretized_tr, reduced_tr), axis=1)
+                    for key_iter in range(self.config['iterations']):
+                        print(key_iter)
+                        X = _dataset[:, 0:-1]
+                        y = _dataset[:, -1]
+                        k = 0
+                        for train_idx, test_idx in self.validator.split(X, y):
+                            X_train, X_test = X[train_idx], X[test_idx]
+                            # y_test = actual class label of test data
+                            # y_train = actual class label of train data
+                            y_train, y_test = y[train_idx], y[test_idx]
 
-                    metric_sizes = DataPreprocessing.get_metrics_size(_dataset)
+                            X_train, y_train = shuffle(X_train, y_train)
+                            clf.fit(X_train, y_train)
+                            score = clf.predict(X_test)
+                            print(self.dataset_names[ds_cat][i])
+                            perf_holder = self.perf_obj.compute_measures(y_test, score)
 
-                    class_probability_holder = np.zeros((metric_sizes[-1], 1))
+                            cross_val_pack = [str(self.dataset_names[ds_cat][i]), key_iter, k, model_name,
+                                              *perf_holder]
 
-                    k = 0
+                            k = k + 1
 
-                    for train_idx, test_idx in self.validator.split(X, y):
-                        X_train, X_test = X[train_idx], X[test_idx]
-                        # y_test = actual class label of test data
-                        # y_train = actual class label of train data
-                        y_train, y_test = y[train_idx], y[test_idx]
-
-                        predicted = []
-
-                        clf.fit(X_train, y_train)
-                        score = clf.predict(X_test)
-                        prob = clf.predict_proba(X_test)
-
-                        perf_holder = self.perf_obj.compute_measures(y_test, score)
-
-                        cross_val_pack = [str(self.dataset_names[key_dataset]), key_iter, k, model_name, perf_holder]
-
-                        k = k + 1
-
-                        temp_result.append(cross_val_pack)
-        dh_obj.write_csv(temp_result, self.config['file_level_WPDP_cross_validation_results_des'])
+                            temp_result.append(cross_val_pack)
+                            dh_obj.write_csv(temp_result,
+                                             self.config['file_level_WPDP_cross_validation_results_des'])
 
 
 def main():
@@ -195,7 +438,8 @@ def main():
     dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration, drop_unused_columns="new")
 
     bench_obj = Benchmarks(dataset, dataset_names, datasets_file_names, configuration)
-
+    if configuration['validation_type'] == 0:
+        bench_obj.differen_release_MLMNB()
     if configuration['validation_type'] == 1:
         bench_obj.different_release()
     if configuration['validation_type'] == 2:

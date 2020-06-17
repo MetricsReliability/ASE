@@ -136,7 +136,7 @@ class LoadConfig:
 
     @validation_type.setter
     def validation_type(self, cv):
-        if cv == 1 or cv == 2 or cv == 3 or cv == 4:
+        if cv == 0 or cv == 1 or cv == 2 or cv == 3 or cv == 4:
             self._cross_validation_type = cv
         else:
             raise ValueError("Please select 1 or 2 or 3. Check configuration file please!")

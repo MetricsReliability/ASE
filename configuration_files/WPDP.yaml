@@ -1,37 +1,36 @@
 # 1 for file level
 # 2 for change level. Please note that this feature is not added yet.
 # 3 for misc stuff. Misc stuff are processes that are not related to benchmark and experimentation.
-granularity: 3
-# 1 for stable defect prediction, use different releases
+granularity: 1
 # 2 for cross-validation
-validation_type: 1
-# 1 for KFOLD
-# 2 for leave one out
-# 3 for strafied kfold
-cross_validation_type: 1
+validation_type: 2
+# 1 for leave one out
+# 2 for strafied kfold
+# 3 for KFOLD
+cross_validation_type: 2
 # this parameter is only used when you select cross validation type as KFOLD
 number_of_folds: 10
 # the number of iterations
-iterations: 1
+iterations: 10
 # You have the following options: Precision, Recall, ACC, MCC, F1
 evaluation_measures: [Precision, Recall, F1, ACC, MCC, AUC]
-# if you want to output predictions for test set, set this field to True
+# if you want to outputs predictions for test set, set this field to True
 save_predictions: True
 # if you want to store confusion matrix for each test case, set this field to True
 save_confusion_matrix: True
 # Specify defect models for prediction
 # "Random Forest", "Naive Bayes",
-defect_models: ["Random Forest" ,"Naive Bayes" ,"Logistic Regression"]
+defect_models: ["RandomForest" ,"NaiveBayes" ,"LogisticRegression", "DecisionTree", "SVM", "KNN"]
 ################################################
 ######################IO ADDRESSES###############
 #################################################
-file_level_WPDP_cross_validation_results_des: "E:\\apply\\york\\project\\source\\outputs\\file_level\\WPDP_cross_validation\\WPDP_cross_validation.csv"
+file_level_WPDP_cross_validation_results_des: "E:\\apply\\york\\project\\source\\outputs\\file_level\\cross_validation\\weighted_avg_res_MLMNB.csv"
 file_level_different_release_results_list_of_clean_buggy: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\"
 change_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\change_level"
 
 # change here
-file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\macro_averaged\\diff_understand.csv"
-file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
+file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\MLMNB\\WPDP_scenario11.csv"
+file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\file_level\\raw_original_datasets"
 
 
 

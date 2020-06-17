@@ -1,0 +1,61 @@
+Defect models,projects' category,Tr version,Ts version,Iterations,Precision,Recall,F1,ACC,MCC,AUC
+Random Forest,ant,ant-1.6.csv,ant-1.7.csv,0,0.46,0.72,0.56,0.75,0.42,0.74
+Random Forest,camel,camel-1.2.csv,camel-1.4.csv,0,0.45,0.1,0.16,0.83,0.15,0.54
+Random Forest,ivy,ivy-1.4.csv,ivy-2.0.csv,0,0.5,0.05,0.09,0.89,0.13,0.52
+Random Forest,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.55,0.59,0.57,0.78,0.42,0.72
+Random Forest,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.86,0.51,0.64,0.81,0.56,0.74
+Random Forest,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.65,0.67,0.66,0.6,0.16,0.58
+Random Forest,poi,poi-2.5.csv,poi-3.0.csv,0,0.76,0.76,0.76,0.7,0.35,0.67
+Random Forest,synapse,synapse-1.1.csv,synapse-1.2.csv,0,0.6,0.14,0.23,0.68,0.16,0.55
+Random Forest,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.55,0.09,0.16,0.53,0.04,0.51
+Random Forest,xerces,xerces-1.2.csv,xerces-1.3.csv,0,0.36,0.07,0.12,0.84,0.1,0.52
+Naive Bayes,ant,ant-1.6.csv,ant-1.7.csv,0,0.44,0.73,0.55,0.73,0.4,0.73
+Naive Bayes,camel,camel-1.2.csv,camel-1.4.csv,0,0.28,0.62,0.39,0.67,0.24,0.65
+Naive Bayes,ivy,ivy-1.4.csv,ivy-2.0.csv,0,0.32,0.7,0.44,0.8,0.38,0.76
+Naive Bayes,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.43,0.75,0.54,0.69,0.37,0.71
+Naive Bayes,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.77,0.73,0.75,0.83,0.63,0.81
+Naive Bayes,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.7,0.54,0.61,0.6,0.22,0.61
+Naive Bayes,poi,poi-2.5.csv,poi-3.0.csv,0,0.83,0.75,0.79,0.75,0.48,0.75
+Naive Bayes,synapse,synapse-1.1.csv,synapse-1.2.csv,0,0.53,0.59,0.56,0.69,0.32,0.66
+Naive Bayes,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.62,0.39,0.48,0.59,0.18,0.58
+Naive Bayes,xerces,xerces-1.2.csv,xerces-1.3.csv,0,0.31,0.39,0.34,0.77,0.21,0.62
+Logistic Regression,ant,ant-1.6.csv,ant-1.7.csv,0,0.57,0.62,0.59,0.81,0.47,0.74
+Logistic Regression,camel,camel-1.2.csv,camel-1.4.csv,0,0.32,0.33,0.33,0.77,0.19,0.6
+Logistic Regression,ivy,ivy-1.4.csv,ivy-2.0.csv,0,0.33,0.05,0.09,0.88,0.09,0.52
+Logistic Regression,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.48,0.61,0.54,0.75,0.37,0.7
+Logistic Regression,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.75,0.57,0.65,0.79,0.51,0.74
+Logistic Regression,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.77,0.42,0.55,0.59,0.26,0.62
+Logistic Regression,poi,poi-2.5.csv,poi-3.0.csv,0,0.68,0.78,0.73,0.63,0.16,0.58
+Logistic Regression,synapse,synapse-1.1.csv,synapse-1.2.csv,0,0.46,0.27,0.34,0.65,0.13,0.55
+Logistic Regression,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.72,0.11,0.19,0.55,0.13,0.54
+Logistic Regression,xerces,xerces-1.2.csv,xerces-1.3.csv,0,0.46,0.09,0.15,0.85,0.15,0.53
+Decision Tree,ant,ant-1.6.csv,ant-1.7.csv,0,0.39,0.48,0.43,0.71,0.24,0.63
+Decision Tree,camel,camel-1.2.csv,camel-1.4.csv,0,0.3,0.68,0.42,0.68,0.28,0.68
+Decision Tree,ivy,ivy-1.4.csv,ivy-2.0.csv,0,0.27,0.17,0.21,0.85,0.14,0.56
+Decision Tree,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.49,0.77,0.6,0.75,0.45,0.75
+Decision Tree,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.67,0.43,0.52,0.73,0.37,0.66
+Decision Tree,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.7,0.42,0.53,0.56,0.18,0.59
+Decision Tree,poi,poi-2.5.csv,poi-3.0.csv,0,0.74,0.75,0.75,0.68,0.3,0.65
+Decision Tree,synapse,synapse-1.1.csv,synapse-1.2.csv,0,0.54,0.37,0.44,0.68,0.24,0.61
+Decision Tree,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.56,0.2,0.29,0.54,0.07,0.53
+Decision Tree,xerces,xerces-1.2.csv,xerces-1.3.csv,0,0.29,0.19,0.23,0.81,0.13,0.55
+SVM,ant,ant-1.6.csv,ant-1.7.csv,0,0.56,0.46,0.51,0.8,0.39,0.68
+SVM,camel,camel-1.2.csv,camel-1.4.csv,0,0.42,0.5,0.46,0.8,0.34,0.68
+SVM,ivy,ivy-1.4.csv,ivy-2.0.csv,0,0.0,0.0,0.0,0.89,0.0,0.5
+SVM,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.53,0.64,0.58,0.77,0.43,0.73
+SVM,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.85,0.46,0.6,0.79,0.51,0.71
+SVM,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.72,0.51,0.6,0.6,0.24,0.62
+SVM,poi,poi-2.5.csv,poi-3.0.csv,0,0.76,0.76,0.76,0.69,0.34,0.67
+SVM,synapse,synapse-1.1.csv,synapse-1.2.csv,0,0.72,0.27,0.39,0.72,0.31,0.61
+SVM,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.68,0.07,0.13,0.54,0.09,0.52
+SVM,xerces,xerces-1.2.csv,xerces-1.3.csv,0,0.33,0.04,0.08,0.84,0.07,0.51
+KNN,ant,ant-1.6.csv,ant-1.7.csv,0,0.47,0.49,0.48,0.76,0.32,0.67
+KNN,camel,camel-1.2.csv,camel-1.4.csv,0,0.31,0.59,0.4,0.71,0.26,0.66
+KNN,ivy,ivy-1.4.csv,ivy-2.0.csv,0,0.67,0.05,0.09,0.89,0.16,0.52
+KNN,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.5,0.67,0.57,0.75,0.41,0.72
+KNN,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.75,0.57,0.65,0.79,0.51,0.74
+KNN,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.72,0.53,0.61,0.61,0.24,0.62
+KNN,poi,poi-2.5.csv,poi-3.0.csv,0,0.74,0.79,0.76,0.69,0.3,0.65
+KNN,synapse,synapse-1.1.csv,synapse-1.2.csv,0,0.55,0.3,0.39,0.68,0.22,0.59
+KNN,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.69,0.13,0.22,0.55,0.13,0.54
+KNN,xerces,xerces-1.2.csv,xerces-1.3.csv,0,0.16,0.1,0.12,0.78,0.01,0.5

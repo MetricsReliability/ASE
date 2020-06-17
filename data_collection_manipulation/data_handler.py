@@ -17,14 +17,17 @@ class DataPreprocessing:
     @staticmethod
     def binerize_class(data):
         for key, value in data.items():
+            if len(value[1]) == 0:
+                del value[1]
             for i, item in enumerate(value):
-                num_records = item.shape[0]
-                for r in range(num_records):
-                    if item.iloc[r, -1] > 0:
-                        item.iloc[r, -1] = 2
-                    else:
-                        item.iloc[r, -1] = 1
-                data[key][i] = item
+                if max(item.iloc[:, -1]) > 2:
+                    num_records = item.shape[0]
+                    for r in range(num_records):
+                        if item.iloc[r, -1] > 0:
+                            item.iloc[r, -1] = 2
+                        else:
+                            item.iloc[r, -1] = 1
+                    data[key][i] = item
         return data
 
     @classmethod
@@ -38,7 +41,8 @@ class DataPreprocessing:
         data = np.array(data)
         size_holder = []
         # for i in range(np.size(data, 1)):
-        size_holder.append([len(np.unique(data[:, i])) for i in range(np.size(data, 1))])
+        # size_holder.append([len(np.unique(data[:, i])) for i in range(np.size(data, 1))])
+        size_holder.append([int(max(np.unique(data[:, i]))) for i in range(np.size(data, 1))])
         return size_holder[0]
 
 

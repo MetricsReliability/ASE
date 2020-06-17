@@ -1,0 +1,22 @@
+Defect models,projects' category,Tr version,Ts version,Iterations,Precision,Recall,F1,ACC,MCC,AUC
+Random Forest,ant,ant-1.6.csv,ant-1.7.csv,0,0.74,0.6,0.66,0.81,0.54,0.75
+Random Forest,camel,camel-1.2.csv,camel-1.4.csv,0,0.49,0.82,0.62,0.64,0.36,0.68
+Random Forest,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.3,0.4,0.34,0.78,0.22,0.62
+Random Forest,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.74,0.8,0.77,0.79,0.58,0.79
+Random Forest,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.69,0.68,0.69,0.62,0.21,0.6
+Random Forest,velocity,velocity-1.4.csv,velocity-1.5.csv,0,0.55,0.9,0.69,0.54,-0.01,0.5
+Random Forest,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.66,0.17,0.27,0.38,-0.01,0.49
+Naive Bayes,ant,ant-1.6.csv,ant-1.7.csv,0,0.7,0.53,0.61,0.79,0.47,0.72
+Naive Bayes,camel,camel-1.2.csv,camel-1.4.csv,0,0.65,0.61,0.63,0.75,0.44,0.71
+Naive Bayes,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.19,0.8,0.31,0.47,0.15,0.61
+Naive Bayes,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.91,0.8,0.85,0.88,0.75,0.87
+Naive Bayes,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.8,0.46,0.58,0.6,0.28,0.64
+Naive Bayes,velocity,velocity-1.4.csv,velocity-1.5.csv,0,0.52,0.78,0.62,0.47,-0.17,0.44
+Naive Bayes,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.75,0.19,0.3,0.41,0.07,0.53
+Logistic Regression,ant,ant-1.6.csv,ant-1.7.csv,0,0.73,0.47,0.58,0.79,0.46,0.7
+Logistic Regression,camel,camel-1.2.csv,camel-1.4.csv,0,0.44,0.82,0.58,0.58,0.27,0.63
+Logistic Regression,jedit,jedit-3.2.csv,jedit-4.0.csv,0,0.31,0.36,0.33,0.79,0.21,0.61
+Logistic Regression,log4j,log4j-1.0.csv,log4j-1.1.csv,0,0.73,0.64,0.68,0.74,0.46,0.73
+Logistic Regression,lucene,lucene-2.0.csv,lucene-2.2.csv,0,0.72,0.57,0.64,0.6,0.22,0.61
+Logistic Regression,velocity,velocity-1.4.csv,velocity-1.5.csv,0,0.55,0.9,0.69,0.54,-0.01,0.5
+Logistic Regression,xalan,xalan-2.4.csv,xalan-2.5.csv,0,0.75,0.23,0.35,0.43,0.08,0.54
