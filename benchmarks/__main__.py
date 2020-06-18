@@ -1,4 +1,7 @@
 import random
+import time
+from multiprocessing import Process, Manager
+
 from sklearn.utils import shuffle
 import numpy as np
 from sklearn import svm
@@ -46,18 +49,9 @@ def selection_sort(pval, index):
     return pval, index
 
 
-def discretize(data, bins):
-    split = np.array_split(np.sort(data), bins)
-    cutoffs = [x[-1] for x in split]
-    cutoffs = cutoffs[:-1]
-    discrete = np.digitize(data, cutoffs, right=True)
-    return discrete, cutoffs
-
-
 def feature_selection(tr, ts):
     [m, N] = np.shape(tr)
     tr_cmi = np.zeros((N - 1, N - 1))
-    ts_cmi = np.zeros((N - 1, N - 1))
 
     single_var_cmi = np.zeros((1, N - 1))
     p_store_tr_single = np.zeros((1, N - 1))
@@ -69,19 +63,21 @@ def feature_selection(tr, ts):
     u_ts = []
     for k in range(0, N - 1):
         unique1, counts1 = np.unique(tr[:, k], return_counts=True)
-        unique2, counts2 = np.unique(ts[:, k], return_counts=True)
-        u_tr.append(unique1)
-        u_ts.append(unique2)
+        u_tr.append(len(unique1))
 
     for i in range(N - 1):
         for j in range(N - 1):
             if i != j:
                 tr_cmi[i, j] = ee.cmidd(tr[:, i], tr[:, j], tr[:, -1])
-                ts_cmi[i, j] = ee.cmidd(ts[:, i], ts[:, j], ts[:, -1])
-
+    tr_cmi = 2 * m * tr_cmi
+    ############################################################
     for n in range(N - 1):
         single_var_cmi[0, n] = ee.midd(tr[:, n], tr[:, -1])
+    single_var_cmi = 2 * m * single_var_cmi
 
+    for n in range(N - 1):
+        d1 = 2 * (u_tr[n] - 1)
+        p_store_tr_single[0][n] = stats.chi2.pdf(single_var_cmi[0, n], d1)
     single_var_cmi = np.argsort(single_var_cmi)
     selected_idx = []
 
@@ -91,18 +87,13 @@ def feature_selection(tr, ts):
         selected_idx.append(single_var_cmi[0, idx - 1])
         idx -= 1
         k += 1
-
-    for n in range(N - 1):
-        d1 = (len(u_tr[n]) - 1)
-        p_store_tr_single[0][n] = stats.chi2.pdf(single_var_cmi[0, n], d1)
-
+    ################################################################
     for j in range(N - 1):
         for i in range(N - 1):
             if i != j:
-                d1 = (len(u_tr[j]) - 1) + (len(u_tr[i]) - 1)
-                d2 = (len(u_ts[j]) - 1) + (len(u_ts[i]) - 1)
+                d1 = 2 * (u_tr[j] - 1) * (u_tr[i] - 1)
+                d2 = (u_ts[j] - 1) + (u_ts[i] - 1)
                 p_store_tr[j][i] = stats.chi2.cdf(tr_cmi[j, i], d1)
-                p_store_ts[j][i] = stats.chi2.cdf(ts_cmi[j, i], d2)
 
     latent_variables = []
     state_space = []
@@ -113,18 +104,16 @@ def feature_selection(tr, ts):
     for i in range(N - 1):
         for j in range(N - 1):
             if i < j:
-                p_value_vec_tr.append(tr_cmi[i][j])
-                p_value_vec_ts.append(ts_cmi[i][j])
+                p_value_vec_tr.append(p_store_tr[i][j])
                 index_vec_tr.append([i, j])
                 index_vec_ts.append([i, j])
     [p_val_tr, index_tr] = selection_sort(p_value_vec_tr, index_vec_tr)
-    [p_val_ts, index_ts] = selection_sort(p_value_vec_ts, index_vec_ts)
 
     k = 0
-    for i, _ in reversed(list(enumerate(p_val_tr))):
+    for i in range(len(p_val_tr)):
         latent_variables.append(index_tr[i])
         k += 1
-        if k >= N - 1:
+        if k >= 10:
             break
 
     latent_tuples = [tuple(item) for item in latent_variables]
@@ -142,11 +131,11 @@ def feature_selection(tr, ts):
             new_latent_list.append([list(p1)[i], list(p2)[i]])
     p1 = list(p1)
     p1.append(N - 1)
-
+    # p1 is CMI(X,Y|C)
+    # selected_idx is CMI(X_i|C)
     selected_idx.append(N - 1)
     tr = tr[:, selected_idx]
-    ts = ts[:, selected_idx]
-    return tr, ts
+    return tr
 
 
 class PerformanceEvaluation:
@@ -191,7 +180,7 @@ class PerformanceEvaluation:
             perf_pack.append(round(MCC, 2))
         if self.AUC_flag:
             _auc = roc_auc_score(actual, pred, average=None)
-            perf_pack.append(round(roc_auc_score(actual, pred, average="weighted"), 2))
+            perf_pack.append(round(roc_auc_score(actual, pred, average='weighted'), 2))
         return perf_pack
 
 
@@ -245,7 +234,7 @@ class Benchmarks:
                             tr = np.array(ds_val[j])
                             ts = np.array(ds_val[i])
 
-                            # [tr, ts] = feature_selection(tr, ts)
+                            # tr = feature_selection(tr)
 
                             learner = AmlmnbBase(h=[], h_states=[latent_size], delta=0.01, alpha=0.000001)
 
@@ -388,27 +377,43 @@ class Benchmarks:
         temp_result = [self.cv_header]
         self.model_holder.append("MLMNB")
         children = []
+        learner = AmlmnbBase(h=[], h_states=[3], delta=0.00001, alpha=0.02)
+        self.classifiers.append(learner)
+        temp = self.classifiers[0]
+        self.classifiers[0] = learner
+        self.classifiers[-1] = temp
+
+        temp = self.model_holder[0]
+        self.model_holder[0] = "MLMNB"
+        self.model_holder[-1] = temp
+
         self.dataset = DataPreprocessing.binerize_class(self.dataset)
         for model_name, clf in zip(self.model_holder, self.classifiers):
             for ds_cat, ds_val in self.dataset.items():
                 for i in range(len(ds_val)):
-                    for k in range(np.size(ds_val[i], 1) - 1):
-                        children.append(k)
-                    learner = AmlmnbBase(h=[children], h_states=[10], delta=0.01, alpha=0.00001)
-                    self.classifiers.append(learner)
                     _dataset = np.array(ds_val[i])
-                    if ds_cat == "CM1" or ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
-                        _dataset = self.delete_unused_NASA_metrics(_dataset, ds_cat)
+                    # delete
+                    if model_name == "MLMNB":
+                        _dataset = feature_selection(_dataset)
+                        for k in range(np.size(_dataset, 1) - 1):
+                            children.append(k)
+                        learner = AmlmnbBase(h=[children], h_states=[5], delta=0.01, alpha=0.01)
+                        self.classifiers[0] = learner
+                        _dataset[:, 0:-1] = disc.fit_transform(_dataset[:, 0:-1])
                     else:
-                        reduced_tr = np.delete(_dataset, [9, 11, 13, 14, 17, 19], axis=1)
-                        discretized_tr = disc.fit_transform(_dataset[:, [9, 11, 13, 14, 17, 19]])
-                        _dataset = np.concatenate((discretized_tr, reduced_tr), axis=1)
+                        if ds_cat == "CM1" or ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
+                            _dataset = self.delete_unused_NASA_metrics(_dataset, ds_cat)
+                        else:
+                            reduced_tr = np.delete(_dataset, [9, 11, 13, 14, 17, 19], axis=1)
+                            discretized_tr = disc.fit_transform(_dataset[:, [9, 11, 13, 14, 17, 19]])
+                            _dataset = np.concatenate((discretized_tr, reduced_tr), axis=1)
                     for key_iter in range(self.config['iterations']):
-                        print(key_iter)
                         X = _dataset[:, 0:-1]
                         y = _dataset[:, -1]
                         k = 0
                         for train_idx, test_idx in self.validator.split(X, y):
+                            print('CLASSIFIER:', model_name, "DATASET", self.dataset_names[ds_cat][i], 'ITERATION:',
+                                  key_iter, 'CV_FOLD:', k)
                             X_train, X_test = X[train_idx], X[test_idx]
                             # y_test = actual class label of test data
                             # y_train = actual class label of train data
@@ -417,9 +422,7 @@ class Benchmarks:
                             X_train, y_train = shuffle(X_train, y_train)
                             clf.fit(X_train, y_train)
                             score = clf.predict(X_test)
-                            print(self.dataset_names[ds_cat][i])
                             perf_holder = self.perf_obj.compute_measures(y_test, score)
-
                             cross_val_pack = [str(self.dataset_names[ds_cat][i]), key_iter, k, model_name,
                                               *perf_holder]
 
@@ -428,6 +431,87 @@ class Benchmarks:
                             temp_result.append(cross_val_pack)
                             dh_obj.write_csv(temp_result,
                                              self.config['file_level_WPDP_cross_validation_results_des'])
+
+
+def cv_loop(self, clf, X, y, k):
+    precision = []
+    recall = []
+    f1 = []
+    acc = []
+    mcc = []
+    auc = []
+    for train_idx, test_idx in self.validator.split(X, y):
+        # learner.auto_structure(x_train, y_train)
+        X_train, X_test = X[train_idx], X[test_idx]
+        # y_test = actual class label of test data
+        # y_train = actual class label of train data
+        y_train, y_test = y[train_idx], y[test_idx]
+
+        X_train, y_train = shuffle(X_train, y_train)
+
+        clf.fit(X_train, y_train)
+        score = clf.predict(X_test)
+        perf_holder = self.perf_obj.compute_measures(y_test, score)
+        precision += [perf_holder[0]]
+        recall += [perf_holder[1]]
+        f1 += [perf_holder[2]]
+        acc += [perf_holder[3]]
+        mcc += [perf_holder[4]]
+        auc += [perf_holder[5]]
+    return precision, recall, f1, acc, mcc, auc
+
+
+def worker_thread(self, clf, X, y, k, jj, precision_res, recall_res, f1_res, accuracy_res, mcc_res, auc_res):
+    precision, recall, f1, acc, mcc, auc = self.cv_loop(clf, X, y, k)
+    for i in range(k):
+        precision_res[jj * k + i] = precision[i]
+        recall_res[jj * k + i] = recall[i]
+        f1_res[jj * k + i] = f1[i]
+        accuracy_res[jj * k + i] = acc[i]
+        mcc_res[jj * k + i] = mcc[i]
+        auc_res[jj * k + i] = auc[i]
+
+
+def cv_parallel(self, cv_iteration):
+    if __name__ == '__main__':
+        k = self.config["number_of_folds"]
+        manager = Manager()
+        precision = manager.list([0] * cv_iteration * k)
+        recall = manager.list([0] * cv_iteration * k)
+        f1 = manager.list([0] * cv_iteration * k)
+        accuracy = manager.list([0] * cv_iteration * k)
+        mcc = manager.list([0] * cv_iteration * k)
+        auc = manager.list([0] * cv_iteration * k)
+        temp_result = [self.cv_header]
+        self.model_holder.append("MLMNB")
+        children = []
+        self.dataset = DataPreprocessing.binerize_class(self.dataset)
+        for model_name, clf in zip(self.model_holder, self.classifiers):
+            for ds_cat, ds_val in self.dataset.items():
+                for i in range(len(ds_val)):
+                    for k in range(np.size(ds_val[i], 1) - 1):
+                        children.append(k)
+                    model = AmlmnbBase(h=[children], h_states=[10], delta=0.01, alpha=0.00001)
+                    self.classifiers.append(model)
+                    _dataset = np.array(ds_val[i])
+                    if ds_cat == "CM1" or ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
+                        _dataset = self.delete_unused_NASA_metrics(_dataset, ds_cat)
+                    else:
+                        reduced_tr = np.delete(_dataset, [9, 11, 13, 14, 17, 19], axis=1)
+                        discretized_tr = disc.fit_transform(_dataset[:, [9, 11, 13, 14, 17, 19]])
+                        _dataset = np.concatenate((discretized_tr, reduced_tr), axis=1)
+                    threads = []
+                    for jj in range(cv_iteration):
+                        X = _dataset[:, 0:-1]
+                        y = _dataset[:, -1]
+                        threads = threads + [
+                            Process(target=self.worker_thread,
+                                    args=(clf, X, y, k, jj, precision, recall, f1, accuracy, mcc, auc))]
+                    for ii in range(cv_iteration):
+                        threads[ii].start()
+                    for ii in range(cv_iteration):
+                        threads[ii].join()
+    return precision, recall, f1, accuracy, mcc, auc
 
 
 def main():
@@ -443,7 +527,11 @@ def main():
     if configuration['validation_type'] == 1:
         bench_obj.different_release()
     if configuration['validation_type'] == 2:
+        t1 = time.time()
         bench_obj.cross_validation()
+        t2 = time.time()
+        print("time:", t2 - t1)
+        # precision, recall, f1, accuracy, mcc, auc = bench_obj.cv_parallel(10)
 
 
 if __name__ == '__main__':
