@@ -236,7 +236,7 @@ def main():
         under = "E:\\apply\\york\\project\\source\\datasets\\file_level\\understand_datasets"
         old = "E:\\apply\\york\\project\\source\\datasets\\file_level\\old_datasets_reduced"
 
-        original = "E:\\apply\\york\\project\\source\\datasets\\file_level\\original_datasets"
+        original = "E:\\apply\\york\\project\\source\\datasets\\file_level\\WPDP_datasets"
 
         new_ds_seri_name, new_ds_seri, _ = io_obj.load_datasets(configuration, ckjm,
                                                                 drop_unused_columns='misc')

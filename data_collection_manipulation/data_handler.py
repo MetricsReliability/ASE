@@ -15,6 +15,20 @@ def rearrange(pivot, ds):
 
 class DataPreprocessing:
     @staticmethod
+    def binerizeCPDP(data_pairs):
+        for j, item in enumerate(data_pairs):
+            for i, sub_item in enumerate(item):
+                for r in range(len(sub_item)):
+                    if sub_item.iloc[r, -1] > 0:
+                        sub_item.iloc[r, -1] = 2
+                    else:
+                        sub_item.iloc[r, -1] = 1
+                sub_item = sub_item.drop(
+                    [sub_item.columns[0]], axis='columns')
+                data_pairs[j][i] = sub_item
+        return data_pairs
+
+    @staticmethod
     def binerize_class(data):
         for key, value in data.items():
             if len(value[1]) == 0:
