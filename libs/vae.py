@@ -9,7 +9,7 @@ from sklearn import linear_model
 from sklearn.metrics import precision_recall_curve, classification_report, roc_auc_score, accuracy_score, \
     matthews_corrcoef
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from numpy.random import seed
 import matplotlib.pyplot as plt
 from pylab import rcParams
@@ -17,27 +17,20 @@ import seaborn as sns
 from genetic_selection import GeneticSelectionCV
 from sklearn.preprocessing import StandardScaler
 
+from configuration_files.setup_config import LoadConfig
+from libs.feature_selection import selection_sort
+from data_collection_manipulation.data_handler import DataPreprocessing, IO
+from benchmarks.__main__ import PerformanceEvaluation
+import data_collection_manipulation.data_handler
+
+validator = StratifiedKFold(n_splits=10, random_state=2, shuffle=True)
+
+dh_obj = IO()
+
 seed(1)
 from tensorflow import set_random_seed
 
 set_random_seed(2)
-
-
-def selection_sort(pval, index):
-    n = len(pval)
-    for i in range(n):
-        jmin = i
-        for j in range(i + 1, n):
-            if pval[j] < pval[jmin]:
-                jmin = j
-        if jmin != i:
-            temp1 = pval[i]
-            temp2 = index[i]
-            pval[i] = pval[jmin]
-            index[i] = index[jmin]
-            pval[jmin] = temp1
-            index[jmin] = temp2
-    return pval, index
 
 
 def binerizeCPDP(data):
@@ -49,37 +42,6 @@ def binerizeCPDP(data):
     return data
 
 
-SEED = 123
-DATA_SPLIT_PCT = 0.25
-
-JM1 = "E:\\apply\\york\\project\\source\\datasets\\file_level\\raw_original_datasets\\KC1\\KC1.csv"
-
-traindata = pd.read_csv(filepath_or_buffer=JM1, index_col=None)
-# [0, 1, 3, 10, 13, 31, 6, 18, 19, 17, 20, 21, 22, 32, 33, -1] CM1
-# [0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 16, 17, 18, 20, -1] JM1
-traindata = traindata.iloc[:, [0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 16, 17, 18, 20, -1]]
-# traindata = traindata.drop(
-#     [traindata.columns[0]], axis='columns')
-# traindata = binerizeCPDP(traindata)
-
-df_train, df_test = train_test_split(traindata, test_size=DATA_SPLIT_PCT, random_state=SEED, shuffle=True)
-df_train, df_valid = train_test_split(df_train, test_size=DATA_SPLIT_PCT, random_state=SEED, shuffle=True)
-
-df_train_0 = df_train.loc[traindata['bug'] == 0]
-df_train_1 = df_train.loc[traindata['bug'] == 1]
-df_train_0_x = df_train_0.drop(['bug'], axis=1)
-df_train_1_x = df_train_1.drop(['bug'], axis=1)
-
-df_valid_0 = df_valid.loc[traindata['bug'] == 0]
-df_valid_1 = df_valid.loc[traindata['bug'] == 1]
-df_valid_0_x = df_valid_0.drop(['bug'], axis=1)
-df_valid_1_x = df_valid_1.drop(['bug'], axis=1)
-
-df_test_0 = df_test.loc[traindata['bug'] == 0]
-df_test_1 = df_test.loc[traindata['bug'] == 1]
-df_test_0_x = df_test_0.drop(['bug'], axis=1)
-df_test_1_x = df_test_1.drop(['bug'], axis=1)
-
 # scaler = StandardScaler().fit(df_train_1_x)
 # df_train_1_x_rescaled = scaler.transform(df_train_1_x)
 # df_valid_1_x_rescaled = scaler.transform(df_valid_1_x)
@@ -88,134 +50,166 @@ df_test_1_x = df_test_1.drop(['bug'], axis=1)
 # df_test_1_x_rescaled = scaler.transform(df_test_1_x)
 # df_test_x_rescaled = scaler.transform(df_test.drop(['bug'], axis=1))
 
-nb_epoch = 300
-batch_size = 20
-input_dim = df_train_1_x.shape[1]
-encoding_dim = 32
-hidden_dim = int(encoding_dim / 2)
-learning_rate = 1e-3
+class AutoEncoder:
+    def __init__(self, epoch, batch_size, encoding_dim, learning_rate):
+        self.nb_epoch = epoch
+        self.batch_size = batch_size
+        self.encoding_dim = encoding_dim
+        self.hidden_dim = int(encoding_dim / 2)
+        self.learning_rate = learning_rate
 
-# input_layer = Input(shape=(input_dim,))
-# encoder = Dense(encoding_dim, activation="sigmoid", activity_regularizer=regularizers.l1(learning_rate))(input_layer)
-# encoder = Dense(hidden_dim, activation="sigmoid")(encoder)
-# decoder = Dense(hidden_dim, activation='sigmoid')(encoder)
-# decoder = Dense(input_dim, activation='sigmoid')(decoder)
-# autoencoder = Model(inputs=input_layer, outputs=decoder)
+    # input_layer = Input(shape=(input_dim,))
+    # encoder = Dense(encoding_dim, activation="sigmoid", activity_regularizer=regularizers.l1(learning_rate))(input_layer)
+    # encoder = Dense(hidden_dim, activation="sigmoid")(encoder)
+    # decoder = Dense(hidden_dim, activation='sigmoid')(encoder)
+    # decoder = Dense(input_dim, activation='sigmoid')(decoder)
+    # autoencoder = Model(inputs=input_layer, outputs=decoder)
 
-input_layer = Input(shape=(input_dim,))
-encoded = Dense(128, activation='sigmoid')(input_layer)
-encoded = Dense(64, activation='sigmoid')(encoded)
-encoded = Dense(32, activation='sigmoid')(encoded)
+    def fit(self, df_train_1_x, df_valid_1_x):
+        input_dim = df_train_1_x.shape[1]
 
-decoded = Dense(32, activation='sigmoid')(encoded)
-decoded = Dense(64, activation='sigmoid')(decoded)
-decoded = Dense(input_dim, activation='sigmoid')(decoded)
-autoencoder = Model(inputs=input_layer, outputs=decoded)
+        input_layer = Input(shape=(input_dim,))
+        encoded = Dense(128, activation='sigmoid')(input_layer)
+        encoded = Dense(64, activation='sigmoid')(encoded)
+        encoded = Dense(32, activation='sigmoid')(encoded)
 
-autoencoder.compile(metrics=['accuracy'],
-                    loss='mean_squared_error',
-                    optimizer='adam')
+        decoded = Dense(32, activation='sigmoid')(encoded)
+        decoded = Dense(64, activation='sigmoid')(decoded)
+        decoded = Dense(input_dim, activation='sigmoid')(decoded)
 
-cp = ModelCheckpoint(filepath="autoencoder_classifier.h5",
-                     save_best_only=True,
-                     verbose=0)
+        self.autoencoder = Model(inputs=input_layer, outputs=decoded)
+        self.autoencoder.compile(metrics=['accuracy'],
+                                 loss='mean_squared_error',
+                                 optimizer='adam')
+        # self.cp = ModelCheckpoint(filepath="autoencoder_classifier.h5",
+        #                           save_best_only=True,
+        #                           verbose=0)
+        # self.tb = TensorBoard(log_dir='./logs',
+        #                       histogram_freq=0,
+        #                       write_graph=True,
+        #                       write_images=True)
 
-tb = TensorBoard(log_dir='./logs',
-                 histogram_freq=0,
-                 write_graph=True,
-                 write_images=True)
+        self.autoencoder.fit(df_train_1_x, df_train_1_x,
+                             epochs=self.nb_epoch,
+                             batch_size=self.batch_size,
+                             shuffle=True,
+                             # validation_data=(df_valid_1_x, df_valid_1_x),
+                             verbose=1,
+                             )
 
-history = autoencoder.fit(df_train_0_x, df_train_0_x,
-                          epochs=nb_epoch,
-                          batch_size=batch_size,
-                          shuffle=True,
-                          validation_data=(df_valid_0_x, df_valid_0_x),
-                          verbose=1,
-                          callbacks=[cp, tb]).history
+    def predict(self, df_test):
+        test_x_predictions = self.autoencoder.predict(df_test[:, 0:-1])
 
-valid_x_predictions = autoencoder.predict(df_valid.iloc[:, 0:-1])
-mse = np.mean(np.power(df_valid.iloc[:, 0:-1] - valid_x_predictions, 2), axis=1)
-error_df = pd.DataFrame({'Reconstruction_error': mse,
-                         'True_class': df_valid.iloc[:, -1]})
+        mse = np.mean(np.power(df_test[:, 0:-1] - test_x_predictions, 2), axis=1)
+        error_df_test = pd.DataFrame({'Reconstruction_error': mse,
+                                      'True_class': df_test[:, -1]})
+        error_df_test = error_df_test.reset_index()
 
-# precision_rt, recall_rt, threshold_rt = precision_recall_curve(error_df.True_class, error_df.Reconstruction_error,
-#                                                                pos_label=1)
-# plt.plot(threshold_rt, precision_rt[1:], label="Precision", linewidth=5)
-# plt.plot(threshold_rt, recall_rt[1:], label="Recall", linewidth=5)
-# plt.title('Precision and recall for different threshold values on validation data')
-# plt.xlabel('Threshold')
-# plt.ylabel('Precision/Recall')
-# plt.legend()
-# plt.show()
+        precision_rt, recall_rt, threshold_rt = precision_recall_curve(error_df_test.True_class,
+                                                                       error_df_test.Reconstruction_error, pos_label=2)
 
-test_x_predictions = autoencoder.predict(df_test.iloc[:, 0:-1])
-mse = np.mean(np.power(df_test.iloc[:, 0:-1] - test_x_predictions, 2), axis=1)
-error_df_test = pd.DataFrame({'Reconstruction_error': mse,
-                              'True_class': df_test.iloc[:, -1]})
-error_df_test = error_df_test.reset_index()
+        store = np.zeros((6, len(threshold_rt)))
 
-precision_rt, recall_rt, threshold_rt = precision_recall_curve(error_df_test.True_class,
-                                                               error_df_test.Reconstruction_error, pos_label=1)
-# plt.plot(threshold_rt, precision_rt[1:], label="Precision", linewidth=5)
-# plt.plot(threshold_rt, recall_rt[1:], label="Recall", linewidth=5)
-# plt.title('Precision and recall for different threshold values on test data')
-# plt.xlabel('Threshold')
-# plt.ylabel('Precision/Recall')
-# plt.legend()
-# #plt.show()
+        a = []
+        idx = []
+        for i in range(len(threshold_rt)):
+            threshold_fixed = threshold_rt[i]
 
-auc_list = []
-accuracy = []
-precision = []
-recall = []
-f1score = []
+            pred_y = [2 if e > threshold_fixed else 1 for e in error_df_test.Reconstruction_error.values]
 
-store = np.zeros((6, len(threshold_rt)))
+            report = classification_report(error_df_test.True_class, pred_y, output_dict=True)
 
-for i in range(len(threshold_rt)):
-    threshold_fixed = threshold_rt[i]
-    groups = error_df_test.groupby('True_class')
+            # store[0, i] = threshold_fixed
+            store[0, i] = round(report['weighted avg']['precision'], 2)
+            store[1, i] = round(report['weighted avg']['recall'], 2)
+            store[2, i] = round(report['weighted avg']['f1-score'], 2)
+            store[3, i] = round(accuracy_score(error_df_test.True_class, pred_y), 2)
+            store[4, i] = round(matthews_corrcoef(error_df_test.True_class, pred_y), 2)
+            store[5, i] = round(roc_auc_score(error_df_test.True_class, pred_y, average=None), 2)
 
-    # fig, ax = plt.subplots()
+            a.append(sum(store[:, i]))
+            idx.append(i)
+        #
+        # for i in range(store.shape[1]):
+        #     a.append(sum(store[:, i]))
+        #
+        idx = np.argsort(a)
+        # [_, idx] = selection_sort(a, idx)
+        prec = store[:, idx[-1]][0]
+        reca = store[:, idx[-1]][1]
+        f1 = store[:, idx[-1]][2]
+        acc = store[:, idx[-1]][3]
+        mcc = store[:, idx[-1]][4]
+        auc = store[:, idx[-1]][5]
 
-    # for name, group in groups:
-    #     ax.plot(group.index, group.Reconstruction_error, marker='o', ms=3.5, linestyle='',
-    #             label="Non-defective" if name == 1 else "Defective")
-    # ax.hlines(threshold_fixed, ax.get_xlim()[0], ax.get_xlim()[1], colors="r", zorder=100, label='Threshold')
-    # ax.legend()
-    # plt.title("Reconstruction error for different classes")
-    # plt.ylabel("Reconstruction error")
-    # plt.xlabel("Data point index")
-    # #plt.show()
-
-    pred_y = [1 if e > threshold_fixed else 0 for e in error_df_test.Reconstruction_error.values]
-
-    report = classification_report(error_df_test.True_class, pred_y, output_dict=True)
-
-    # store[0, i] = threshold_fixed
-    store[0, i] = round(report['weighted avg']['precision'], 2)
-    store[1, i] = round(report['weighted avg']['recall'], 2)
-    store[2, i] = round(report['weighted avg']['f1-score'], 2)
-    store[3, i] = round(accuracy_score(error_df_test.True_class, pred_y), 2)
-    store[4, i] = round(matthews_corrcoef(error_df_test.True_class, pred_y), 2)
-    store[5, i] = round(roc_auc_score(error_df_test.True_class, pred_y, average=None), 2)
-    # auc_list.append(round(roc_auc_score(error_df_test.True_class, pred_y, average=None), 2))
-    # accuracy.append(round(accuracy_score(error_df_test.True_class, pred_y), 2))
-    # precision.append(round(report['weighted avg']['precision'], 2))
-    # recall.append(round(report['weighted avg']['recall'], 2))
-    # f1score.append(round(report['weighted avg']['f1-score'], 2))
-a = []
-idx = []
-for i in range(store.shape[1]):
-    a.append(sum(store[:, i]))
-    idx.append(i)
-
-[a, idx] = selection_sort(a, idx)
-prec = store[:, idx[-1]][0]
-reca = store[:, idx[-1]][1]
-f1 = store[:, idx[-1]][2]
-acc = store[:, idx[-1]][3]
-mcc = store[:, idx[-1]][4]
-auc = store[:, idx[-1]][5]
+        return [prec, reca, f1, acc, mcc, auc]
 
 
+def main():
+    SEED = 123
+    DATA_SPLIT_PCT = 0.25
+    config_indicator = 1
+    ch_obj = LoadConfig(config_indicator)
+    configuration = ch_obj.exp_configs
+    nb_epoch = 100
+    batch_size = 128
+    encoding_dim = 32
+    learning_rate = 1e-3
+    au = AutoEncoder(nb_epoch, batch_size, encoding_dim, learning_rate)
+    dataset_names, dataset, datasets_file_names = dh_obj.load_datasets(configuration, drop_unused_columns="new")
+    dataset = DataPreprocessing.binerize_class(dataset)
+
+    temp_result = [["Key_Dataset", "Key_Run", "Key_Fold", "Key_Scheme", "Precsion", "Recall", "F1_Score", "ACC",
+                    "MCC", "AUC"]]
+    for ds_cat, ds_val in dataset.items():
+        for i in range(len(ds_val)):
+            _dataset = np.array(ds_val[i])
+            if ds_cat == "CM1":
+                _dataset = _dataset[:, [0, 1, 3, 10, 13, 31, 6, 18, 19, 17, 20, 21, 22, 32, 33, -1]]
+            elif ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "PC1":
+                _dataset = _dataset[:, [0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 16, 17, 18, 20, -1]]
+
+            X = _dataset[:, 0:-1]
+            y = _dataset[:, -1]
+            for key_iter in range(10):
+                k = 0
+                for train_idx, test_idx in validator.split(X, y):
+                    print('CLASSIFIER:', "DNN", "DATASET", dataset_names[ds_cat][i],
+                          'ITERATION:', key_iter, 'CV_FOLD:', k)
+                    X_train, X_test = X[train_idx], X[test_idx]
+                    y_train, y_test = y[train_idx], y[test_idx]
+
+                    df_train = np.concatenate((X_train, y_train.reshape(-1, 1)), axis=1)
+                    df_test = np.concatenate((X_test, y_test.reshape(-1, 1)), axis=1)
+                    df_train, df_valid = train_test_split(df_train, test_size=DATA_SPLIT_PCT, random_state=SEED,
+                                                          shuffle=True)
+
+                    df_train_1 = df_train[df_train[:, -1] == 1]
+                    df_train_2 = df_train[df_train[:, -1] == 2]
+                    df_train_1_x = np.delete(df_train_1, -1, axis=1)
+                    # df_train_2_x = np.delete(df_train_2, -1, axis=1)
+
+                    df_valid_1 = df_valid[df_valid[:, -1] == 1]
+                    df_valid_2 = df_valid[df_valid[:, -1] == 2]
+                    df_valid_1_x = np.delete(df_valid_1, -1, axis=1)
+                    # df_valid_2_x = np.delete(df_valid_2, -1, axis=1)
+
+                    df_test_1 = df_test[df_test[:, -1] == 1]
+                    df_test_2 = df_test[df_test[:, -1] == 2]
+                    df_test_1_x = np.delete(df_test_1, -1, axis=1)
+                    df_test_2_x = np.delete(df_test_2, -1, axis=1)
+
+                    au.fit(df_train_1_x, df_valid_1_x)
+                    perf_holder = au.predict(df_test)
+
+                    cross_val_pack = [str(dataset_names[ds_cat][i]), key_iter, k, "DNN",
+                                      *perf_holder]
+
+                    k = k + 1
+
+                    temp_result.append(cross_val_pack)
+                    dh_obj.write_csv(temp_result, configuration['file_level_WPDP_cross_validation_results_des'])
+
+
+if __name__ == '__main__':
+    main()

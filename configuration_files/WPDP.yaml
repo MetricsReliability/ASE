@@ -26,13 +26,13 @@ defect_models: ["MLMNB" ,"MNB" ,"LogisticRegression", "DecisionTree", "SVM", "KN
 ################################################
 ######################IO ADDRESSES###############
 #################################################
-file_level_WPDP_cross_validation_results_des: "E:\\apply\\york\\project\\source\\outputs\\file_level\\cross_validation\\onlyNB.csv"
+file_level_WPDP_cross_validation_results_des: "E:\\apply\\york\\project\\source\\outputs\\file_level\\cross_validation\\DNN.csv"
 file_level_different_release_results_list_of_clean_buggy: "E:\\apply\\york\\project\\source\\outputs\\file_level\\different_releases_tr_ts\\"
 change_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\change_level"
 
 # change here
 file_level_different_release_results_whole: "E:\\apply\\york\\project\\source\\outputs\\file_level\\CPDP\\res_featureSelection_discretization.csv"
-file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\file_level\\WPDP_datasets"
+file_level_data_address: "E:\\apply\\york\\project\\source\\datasets\\temp"
 
 
 
