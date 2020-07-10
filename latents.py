@@ -83,7 +83,7 @@ class AMLMNB:
         
     def make_structure(self, x, y, num_cluster, h_states):
         ms = MakeStructure(x, y)
-        self.structure = ms.structure(num_cluster, h_states)
+        cluster = ms.structure(num_cluster, h_states)
 
     def fit(self, x, y, iteration=100):
         self.base_learner = []

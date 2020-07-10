@@ -100,7 +100,7 @@ class MakeStructure:
         
         self.h = [list(cluster[i]) for i in range(len(cluster))]
         self.determine_h_states(h_states)
-        return self
+        return cluster
 
     def determine_h_states(self, h_states):
         self.h_states = []
