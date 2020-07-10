@@ -31,7 +31,7 @@ seed(1)
 from tensorflow import set_random_seed
 
 set_random_seed(2)
-
+from keras import backend as b
 
 def binerizeCPDP(data):
     for r in range(len(data)):
@@ -65,9 +65,8 @@ class AutoEncoder:
     # decoder = Dense(input_dim, activation='sigmoid')(decoder)
     # autoencoder = Model(inputs=input_layer, outputs=decoder)
 
-    def fit(self, df_train_1_x, df_valid_1_x):
+    def fit(self, df_train_1_x):
         input_dim = df_train_1_x.shape[1]
-
         input_layer = Input(shape=(input_dim,))
         encoded = Dense(128, activation='sigmoid')(input_layer)
         encoded = Dense(64, activation='sigmoid')(encoded)
@@ -120,9 +119,9 @@ class AutoEncoder:
             report = classification_report(error_df_test.True_class, pred_y, output_dict=True)
 
             # store[0, i] = threshold_fixed
-            store[0, i] = round(report['weighted avg']['precision'], 2)
-            store[1, i] = round(report['weighted avg']['recall'], 2)
-            store[2, i] = round(report['weighted avg']['f1-score'], 2)
+            store[0, i] = round(report['2.0']['precision'], 2)
+            store[1, i] = round(report['2.0']['recall'], 2)
+            store[2, i] = round(report['2.0']['f1-score'], 2)
             store[3, i] = round(accuracy_score(error_df_test.True_class, pred_y), 2)
             store[4, i] = round(matthews_corrcoef(error_df_test.True_class, pred_y), 2)
             store[5, i] = round(roc_auc_score(error_df_test.True_class, pred_y, average=None), 2)
@@ -152,7 +151,7 @@ def main():
     ch_obj = LoadConfig(config_indicator)
     configuration = ch_obj.exp_configs
     nb_epoch = 100
-    batch_size = 128
+    batch_size = 50
     encoding_dim = 32
     learning_rate = 1e-3
     au = AutoEncoder(nb_epoch, batch_size, encoding_dim, learning_rate)
@@ -199,6 +198,7 @@ def main():
                     df_test_1_x = np.delete(df_test_1, -1, axis=1)
                     df_test_2_x = np.delete(df_test_2, -1, axis=1)
 
+                    b.clear_session()
                     au.fit(df_train_1_x, df_valid_1_x)
                     perf_holder = au.predict(df_test)
 

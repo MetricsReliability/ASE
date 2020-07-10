@@ -13,18 +13,22 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef, \
 from sklearn.naive_bayes import MultinomialNB, GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.model_selection import KFold
 from data_collection_manipulation.data_handler import IO
 from configuration_files.setup_config import LoadConfig
 from data_collection_manipulation.data_handler import DataPreprocessing
 from sklearn import tree
 import pandas as pd
+from keras import backend as b
 from libs.MLMNB_package_python import MLMNB
 from sklearn.preprocessing import KBinsDiscretizer
 from libs.feature_selection import feature_selection
 # from libs.TCA import TCA
 # from tl_algs import tl_alg
 from da_tool.tca import TCA
+
+from libs import vae
 
 dh_obj = IO()
 disc = KBinsDiscretizer(n_bins=10, encode='ordinal')
@@ -92,8 +96,13 @@ class Benchmarks:
             self.validator = KFold(n_splits=self.config['number_of_folds'])
         # n_estimators=1, bootstrap=False, n_jobs=-1, max_depth=3, max_features=None,
         #                                    random_state=99
+        self.nb_epoch = 100
+        self.batch_size = 50
+        self.encoding_dim = 32
+        self.learning_rate = 1e-3
+
         self.classifiers = [RandomForestClassifier(), MultinomialNB(), LogisticRegression(),
-                            tree.DecisionTreeClassifier(), svm.SVC(),
+                            tree.DecisionTreeClassifier(), AdaBoostClassifier(n_estimators=100),
                             KNeighborsClassifier(n_neighbors=3)]
 
         # self.classifiers = []
@@ -126,13 +135,14 @@ class Benchmarks:
         return rec
 
     def wpdp(self):
-        self.model_holder.append("MLMNB")
         children = []
         learner = AmlmnbBase(h=[], h_states=[1], delta=0.001, alpha=0.00001, mode_h='individual11')
+        au = vae.AutoEncoder(self.nb_epoch, self.batch_size, self.encoding_dim, self.learning_rate)
         self.classifiers.append(learner)
+        self.classifiers.append(au)
         temp = self.classifiers[0]
         self.classifiers[0] = learner
-        self.classifiers[-1] = temp
+        self.classifiers[-2] = temp
 
         # MNB_CLF = AmlmnbBase(h=[], h_states=[1], delta=0.001, alpha=0.00001, mode_h='individual')
         # self.model_holder[1] = "MNB"
@@ -198,14 +208,32 @@ class Benchmarks:
                         y_test = ts[:, -1]
 
                         for iterations in range(self.config['iterations']):
-                            clf.fit(X_train, y_train)
-                            random.seed(100)
-                            y_pred = clf.predict(X_test)
+                            if model_name == "DNN":
+                                df_train = np.concatenate((X_train, y_train.reshape(-1, 1)), axis=1)
+                                df_test = np.concatenate((X_test, y_test.reshape(-1, 1)), axis=1)
 
-                            y_pred = np.array(y_pred)
+                                df_train_1 = df_train[df_train[:, -1] == 1]
+                                df_train_2 = df_train[df_train[:, -1] == 2]
+                                df_train_1_x = np.delete(df_train_1, -1, axis=1)
+                                # df_train_2_x = np.delete(df_train_2, -1, axis=1)
+
+                                df_test_1 = df_test[df_test[:, -1] == 1]
+                                df_test_2 = df_test[df_test[:, -1] == 2]
+                                df_test_1_x = np.delete(df_test_1, -1, axis=1)
+                                df_test_2_x = np.delete(df_test_2, -1, axis=1)
+
+                                b.clear_session()
+                                clf.fit(df_train_1_x)
+                                perf_holder = clf.predict(df_test)
+                            else:
+                                clf.fit(X_train, y_train)
+                                random.seed(100)
+                                y_pred = clf.predict(X_test)
+
+                                y_pred = np.array(y_pred)
+                                perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
 
                             print(self.dataset_names[ds_cat][i])
-                            perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
 
                             release_pack = [model_name, ds_cat, self.dataset_names[ds_cat][i],
                                             self.dataset_names[ds_cat][j], iterations,
@@ -226,13 +254,14 @@ class Benchmarks:
             dh_obj.write_csv(temp_result, self.config['file_level_different_release_results_whole'])
 
     def cpdp(self):
-        self.model_holder.append("MLMNB")
         children = []
         learner = AmlmnbBase(h=[], h_states=[1], delta=0.001, alpha=0.00001, mode_h='individual11')
+        au = vae.AutoEncoder(self.nb_epoch, self.batch_size, self.encoding_dim, self.learning_rate)
         self.classifiers.append(learner)
+        self.classifiers.append(au)
         temp = self.classifiers[0]
         self.classifiers[0] = learner
-        self.classifiers[-1] = temp
+        self.classifiers[-2] = temp
 
         data_pairs = load_CPDP_datasets()
         data_pairs = DataPreprocessing.binerizeCPDP(data_pairs)
@@ -297,13 +326,30 @@ class Benchmarks:
 
                 for iterations in range(self.config['iterations']):
                     print("MODEL:", model_name, "PAIR:", pair, "ITERATION:", iterations)
-                    clf.fit(X_train, y_train)
-                    random.seed(100)
-                    y_pred = clf.predict(X_test)
+                    if model_name == "DNN":
+                        df_train = np.concatenate((X_train, y_train.reshape(-1, 1)), axis=1)
+                        df_test = np.concatenate((X_test, y_test.reshape(-1, 1)), axis=1)
 
-                    y_pred = np.array(y_pred)
+                        df_train_1 = df_train[df_train[:, -1] == 1]
+                        df_train_2 = df_train[df_train[:, -1] == 2]
+                        df_train_1_x = np.delete(df_train_1, -1, axis=1)
+                        # df_train_2_x = np.delete(df_train_2, -1, axis=1)
 
-                    perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
+                        df_test_1 = df_test[df_test[:, -1] == 1]
+                        df_test_2 = df_test[df_test[:, -1] == 2]
+                        df_test_1_x = np.delete(df_test_1, -1, axis=1)
+                        df_test_2_x = np.delete(df_test_2, -1, axis=1)
+
+                        b.clear_session()
+                        clf.fit(df_train_1_x)
+                        perf_holder = clf.predict(df_test)
+                    else:
+                        clf.fit(X_train, y_train)
+                        random.seed(100)
+                        y_pred = clf.predict(X_test)
+
+                        y_pred = np.array(y_pred)
+                        perf_holder = self.perf_obj.compute_measures(y_test, y_pred)
 
                     release_pack = [model_name, pair, iterations, *perf_holder]
 
@@ -331,26 +377,19 @@ class Benchmarks:
 
     def cross_validation(self):
         temp_result = [self.cv_header]
-        # self.model_holder.append("MLMNB")
         children = []
-        # learner = AmlmnbBase(h=[], h_states=[3], delta=0.00001, alpha=0.02)
-        # self.classifiers.append(learner)
-        # temp = self.classifiers[0]
-        # self.classifiers[0] = learner
-        # self.classifiers[-1] = temp
-        #
-        # temp = self.model_holder[0]
-        # self.model_holder[0] = "NMLMNB"
-        # self.model_holder[-1] = temp
-
-        # MNB_CLF = AmlmnbBase(h=[], h_states=[1], delta=0.001, alpha=0.00001, mode_h='individual')
-        # self.model_holder[1] = "MNB"
-        # self.classifiers[1] = MNB_CLF
+        self.model_holder.append("MLMNB")
+        children = []
+        learner = AmlmnbBase(h=[], h_states=[1], delta=0.001, alpha=0.00001, mode_h='individual11')
+        self.classifiers.append(learner)
+        temp = self.classifiers[0]
+        self.classifiers[0] = learner
+        self.classifiers[-1] = temp
 
         self.dataset = DataPreprocessing.binerize_class(self.dataset)
         for model_name, clf in zip(self.model_holder, self.classifiers):
             if model_name == "MLMNB":
-                for ii in range(1, 2):
+                for ii in range(1, 10):
                     for ds_cat, ds_val in self.dataset.items():
                         for i in range(len(ds_val)):
                             _dataset = np.array(ds_val[i])
@@ -371,14 +410,14 @@ class Benchmarks:
                             if ii == 1:
                                 learner = AmlmnbBase(h=[], h_states=[ii], delta=0.001, alpha=0.00001)
                             else:
-                                learner = AmlmnbBase(h=[children], h_states=[ii], delta=0.01, alpha=0.001)
+                                learner = AmlmnbBase(h=[children], h_states=[ii], delta=0.001, alpha=0.00001)
                             clf = learner
-                            if ds_cat == "CM1" or ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
-                                _dataset = self.delete_unused_NASA_metrics(_dataset, ds_cat, conti_features)
-                            else:
-                                reduced_tr = np.delete(_dataset, conti_features, axis=1)
-                                discretized_tr = disc.fit_transform(_dataset[:, conti_features])
-                                _dataset = np.concatenate((discretized_tr, reduced_tr), axis=1)
+                            # if ds_cat == "CM1" or ds_cat == "JM1" or ds_cat == "KC1" or ds_cat == "KC2" or ds_cat == "KC3":
+                            #     _dataset = self.delete_unused_NASA_metrics(_dataset, ds_cat, conti_features)
+                            # else:
+                            #     reduced_tr = np.delete(_dataset, conti_features, axis=1)
+                            #     discretized_tr = disc.fit_transform(_dataset[:, conti_features])
+                            #     _dataset = np.concatenate((discretized_tr, reduced_tr), axis=1)
 
                             for key_iter in range(self.config['iterations']):
                                 X = _dataset[:, 0:-1]
@@ -518,7 +557,7 @@ def main():
 
     bench_obj = Benchmarks(dataset, dataset_names, datasets_file_names, configuration)
     if configuration['validation_type'] == 0:
-        bench_obj.differen_release_MLMNB()
+        bench_obj.cv_parallel(10)
     if configuration['validation_type'] == 1:
         bench_obj.wpdp()
     if configuration['validation_type'] == 2:
