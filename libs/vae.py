@@ -41,15 +41,6 @@ def binerizeCPDP(data):
             data.iloc[r, -1] = 1
     return data
 
-
-# scaler = StandardScaler().fit(df_train_1_x)
-# df_train_1_x_rescaled = scaler.transform(df_train_1_x)
-# df_valid_1_x_rescaled = scaler.transform(df_valid_1_x)
-# df_valid_x_rescaled = scaler.transform(df_valid.drop(['bug'], axis=1))
-#
-# df_test_1_x_rescaled = scaler.transform(df_test_1_x)
-# df_test_x_rescaled = scaler.transform(df_test.drop(['bug'], axis=1))
-
 class AutoEncoder:
     def __init__(self, epoch, batch_size, encoding_dim, learning_rate):
         self.nb_epoch = epoch
@@ -57,13 +48,6 @@ class AutoEncoder:
         self.encoding_dim = encoding_dim
         self.hidden_dim = int(encoding_dim / 2)
         self.learning_rate = learning_rate
-
-    # input_layer = Input(shape=(input_dim,))
-    # encoder = Dense(encoding_dim, activation="sigmoid", activity_regularizer=regularizers.l1(learning_rate))(input_layer)
-    # encoder = Dense(hidden_dim, activation="sigmoid")(encoder)
-    # decoder = Dense(hidden_dim, activation='sigmoid')(encoder)
-    # decoder = Dense(input_dim, activation='sigmoid')(decoder)
-    # autoencoder = Model(inputs=input_layer, outputs=decoder)
 
     def fit(self, df_train_1_x):
         input_dim = df_train_1_x.shape[1]
@@ -80,13 +64,6 @@ class AutoEncoder:
         self.autoencoder.compile(metrics=['accuracy'],
                                  loss='mean_squared_error',
                                  optimizer='adam')
-        # self.cp = ModelCheckpoint(filepath="autoencoder_classifier.h5",
-        #                           save_best_only=True,
-        #                           verbose=0)
-        # self.tb = TensorBoard(log_dir='./logs',
-        #                       histogram_freq=0,
-        #                       write_graph=True,
-        #                       write_images=True)
 
         self.autoencoder.fit(df_train_1_x, df_train_1_x,
                              epochs=self.nb_epoch,
